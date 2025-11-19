@@ -2,19 +2,9 @@ import { Outlet, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { authenticate } from "../shopify.server";
-//import { initializeBeforeLoginPages } from '../utils/init-beforelogin';
 
 export const loader = async ({ request }) => {
   const { admin , session} = await authenticate.admin(request);
-  //await authenticate.admin(request);
-  // try {
-  //   await initializeBeforeLoginPages(admin, session);
-  // } catch (err) {
-  //   console.error("initializeBeforeLoginPages (top-level) failed:", err);
-  // }
-  //await initializeBeforeLoginPages(admin, session);
-
-  // eslint-disable-next-line no-undef
   return { apiKey: process.env.SHOPIFY_API_KEY || "" };
 };
 

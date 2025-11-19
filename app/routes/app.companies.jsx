@@ -185,7 +185,7 @@ export default function CompanyListRoute() {
   };
 
   return (
-    <AppProvider embedded apiKey={apiKey}>
+    <s-page>
       <s-stack direction="block" gap="base">
         <s-grid gridTemplateColumns="1fr auto">
           <s-heading>Company Applications</s-heading>
@@ -358,6 +358,6 @@ export default function CompanyListRoute() {
           </s-stack>
         </s-box>
       </s-stack>
-    </AppProvider>
+    </s-page>
   );
 }

@@ -211,7 +211,7 @@ export default function ExtensionSettings() {
   };
 
   return (
-    <AppProvider embedded apiKey={apiKey}>
+    <>
       <s-page title="Extension Configuration">
         <s-section>
           <s-box padding="base" border="base" borderRadius="base" background="base">
@@ -222,7 +222,7 @@ export default function ExtensionSettings() {
                 manual review.
               </s-text>
 
-              <s-stack direction="blosk" gap="base">
+              <s-stack direction="block" gap="base">
                 <s-text tone={current ? "success" : "critical"}>
                   Auto Approval is <strong>{current ? "Enabled" : "Disabled"}</strong>
                 </s-text>
@@ -297,6 +297,6 @@ export default function ExtensionSettings() {
           </s-box>
         </s-section>
       </s-page>
-    </AppProvider>
+      </>
   );
 }
