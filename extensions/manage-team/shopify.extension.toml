@@ -1,0 +1,40 @@
+# Learn more about configuring your Customer account UI extension:
+# https://shopify.dev/api/customer-account-ui-extensions/unstable/configuration
+
+# The version of APIs your extension will receive. Learn more:
+# https://shopify.dev/docs/api/usage/versioning
+api_version = "2025-10"
+
+[[extensions]]
+name = "manage-team"
+handle = "manage-team"
+type = "ui_extension"
+uid = "0e2339c6-81b1-d6bd-78d1-3472e3600428e05f7334"
+
+# Controls where in Shopify your extension will be injected,
+# and the file that contains your extension’s source code. Learn more:
+# https://shopify.dev/docs/api/customer-account-ui-extensions/unstable/extension-targets-overview
+
+[[extensions.targeting]]
+module = "./src/ManageTeam.jsx"
+target = "customer-account.page.render"
+
+[capabilities]
+customer_privacy_api = true
+
+[extensions.targeting.capabilities]
+allow_direct_linking = true
+
+[capabilities.network_access]
+uses_network_access = true
+purpose = "Form submission for B2B company Manage Team"
+
+[extensions.capabilities]
+# Gives your extension access to directly query Shopify’s storefront API.
+# https://shopify.dev/docs/api/customer-account-ui-extensions/unstable/configuration#api-access
+api_access = true
+
+# Gives your extension access to make external network calls, using the
+# JavaScript `fetch()` API. Learn more:
+# https://shopify.dev/docs/api/customer-account-ui-extensions/unstable/configuration#network-access
+ network_access = true

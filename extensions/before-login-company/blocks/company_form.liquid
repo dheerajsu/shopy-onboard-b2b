@@ -1,0 +1,80 @@
+<!-- Load CSS -->
+{{ 'company-form.css' | asset_url | stylesheet_tag }}
+
+<div class="shopy-company-form-section" data-section-id="{{ block.id }}" style="background: {{ block.settings.background_color | default: '#f8f9fa' }};">
+  <div class="shopy-shopy-page-width">
+    <div class="shopy-company-form__wrapper">
+      
+      <!-- Header with dynamic settings -->
+      <div class="shopy-company-form__header">
+        <h1>{{ block.settings.form_title | default: 'Company Registration' }}</h1>
+        {% if block.settings.form_description != blank %}
+          <p class="form-header-description">{{ block.settings.form_description }}</p>
+        {% endif %}
+      </div>
+      
+      <!-- Form Container -->
+      <div class="shopy-company-form-container">
+        <div id="shopy-company-form-{{ block.id }}"></div>
+      </div>
+      
+    </div>
+  </div>
+</div>
+
+<!-- Load JavaScript -->
+<script>window.COUNTRIES_URL = "{{ 'countries.json' | asset_url }}";</script>
+<script src="{{ 'company-form.js' | asset_url }}" defer></script>
+
+<!-- Initialize Form -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof window.initializeCompanyForm === 'function') {
+      window.initializeCompanyForm('shopy-company-form-{{ block.id }}', {
+        blockId: '{{ block.id }}',
+        apiEndpoint: 'api/company-submissions',
+        requirePhone: {{ block.settings.require_phone | default: false }},
+        formTitle: '{{ block.settings.form_title | default: "Company Registration" | escape }}'
+      });
+    } else {
+      console.error('initializeCompanyForm not found');
+    }
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Company Registration Form",
+  "target": "section",
+  "enabled_on": {
+    "templates": ["*"],
+    "groups": ["*"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "form_title",
+      "label": "Form Title",
+      "default": "Company Registration"
+    },
+    {
+      "type": "text",
+      "id": "form_description",
+      "label": "Form Description",
+      "default": "Please provide your company information to proceed with your account setup."
+    },
+    {
+      "type": "checkbox",
+      "id": "require_phone",
+      "label": "Require Phone Number",
+      "default": false
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Section Background Color",
+      "default": "#f8f9fa"
+    }
+  ]
+}
+{% endschema %}

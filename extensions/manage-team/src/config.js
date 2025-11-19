@@ -1,0 +1,1 @@
+export const BASE_URL = "https://geo-terrain-elvis-photo.trycloudflare.com";

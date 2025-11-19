@@ -1,0 +1,132 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  appapikey     String?   @unique
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+}
+
+model Companycontact{
+  id              Int     @id @default(autoincrement())
+  shopId          String?
+  baseCustomerId  String  @unique
+  customername    String
+  email           String?
+  companystatus   Boolean  @default(true)
+  
+  company         Company[]
+}
+
+model Company {
+  id                    Int      @id @default(autoincrement())
+  shopId                String?
+  // relation company to customer
+  companycontact        Companycontact?  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId            Int?
+
+  // Customer Information
+  customerFirstName      String?
+  customerLastName       String?
+  customerEmail          String?
+  customerPhone          String?
+  aurthorizedStatus      Boolean? @default(false)
+
+  companyGid            String?   @unique
+  name                  String?
+  externalId            String?
+  billing               Json?
+  shipping              Json?
+
+  taxId                  String?
+
+
+  contactInfoFirstName  String?
+  contactInfoLastName   String?
+  contactInfoJob        String?
+  billingshippingsame   Boolean? @default(false)
+  companyStatus         String?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  locations             Location[]
+  @@unique([customerEmail, shopId], name: "unique_email_per_store")
+}
+
+model Location {
+  id           Int      @id @default(autoincrement())
+  shopId       String?
+  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId    Int
+
+  locationGid  String   @unique
+  name         String?
+  // structured address fields
+  billing     Json  
+  shipping    Json?
+  // semantic flags
+  isShipping   Boolean   @default(false)
+  isBilling    Boolean   @default(false)
+  isActive     Boolean   @default(true)
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([companyId])
+
+  companys CompanyMember[]
+
+}
+
+model CompanyMember {
+  id                      Int      @id @default(autoincrement())
+  shopId                  String?
+  location                Location  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId              Int
+  memberContactId         String
+  firstName               String?
+  lastName                String? 
+  title                   String
+  email                   String?
+  companyContactRoleId    String?
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([locationId])
+}
+
+model Setting {
+  id           Int      @id @default(autoincrement())
+  shopId       String?  @unique
+  autoApproval Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

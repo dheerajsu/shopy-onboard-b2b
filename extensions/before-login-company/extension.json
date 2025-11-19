@@ -1,0 +1,32 @@
+{
+  "name": "beforeLoginCompany",
+  "type": "theme_app_extension",
+  "description": "Company information form with server-side processing",
+  "api_version": "2025-10",
+  "version": "1.0.0",
+  "runtime_context": "strict",
+  "capabilities": {
+    "block_progress": false,
+    "network_access": true
+  },
+  "extension_points": [
+    "theme.app-extension.block"
+  ],
+  "metafields": [],
+  "navigation": {
+    "sections": [
+      {
+        "id": "before-login-company",
+        "name": "Company Submissions",
+        "items": [
+          {
+            "id": "view-submissions",
+            "name": "View Submissions",
+            "url": "/app/company-submissions",
+            "target": "app"
+          }
+        ]
+      }
+    ]
+  }
+}
