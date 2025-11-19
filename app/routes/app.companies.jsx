@@ -99,7 +99,7 @@ export const loader = async ({ request }) => {
   });
 };
 
-export default function CompanyListRoute() {
+export default function CompaniesPage() {
   const { apiKey, companies: initialCompanies, pagination: initialPagination } = useLoaderData();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
