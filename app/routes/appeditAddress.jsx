@@ -1,5 +1,5 @@
 import { useFetcher, useLoaderData } from "react-router";
-import prisma from "../db.server"
+import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 import { useState, useEffect } from "react";
 import { get_customer_exist } from "./query";

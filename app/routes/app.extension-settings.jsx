@@ -17,7 +17,7 @@ export const loader = async ({ request }) => {
 
   // if not found, create a default one
   if (!setting) {
-    setting = await prisma.setting.create({
+    setting = await prisma.setting.create({ 
       data: {
         shopId: shopDomain,
         autoApproval: false,
