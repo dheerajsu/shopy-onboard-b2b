@@ -2,7 +2,7 @@
 
 client_id = "4b84fdd0d836c19d170a35dc0024477d"
 name = "shop-b2b-registrations-2"
-application_url = "https://shopy-onboard-b2b.onrender.com/"
+application_url = "https://shopy-onboard-b2b.onrender.com"
 embedded = true
 
 [build]
