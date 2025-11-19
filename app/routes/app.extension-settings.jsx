@@ -16,7 +16,7 @@ prisma = globalThis.prisma;
 export const loader = async ({ request }) => {
   const { session, admin } = await authenticate.admin(request);
   const shopDomain = session.shop;
-  console.log("my shop domain", shopDomain);
+  //console.log("my shop domain", shopDomain);
   // find setting for this shop
   let setting = await prisma.setting.findUnique({
     where: { shopId: shopDomain },
@@ -37,7 +37,7 @@ export const loader = async ({ request }) => {
   let sessionRecords = await prisma.session.findMany({
     where: { shop: shopDomain },
   }).catch(() => []);
-  console.log("sessionRecords", sessionRecords);
+  //console.log("sessionRecords", sessionRecords);
 
   const appApiKey = sessionRecords && sessionRecords.length > 0 ? sessionRecords[0].appapikey ?? "" : "";
 
@@ -156,12 +156,13 @@ export default function ExtensionSettings() {
 
   const current =
     fetcher.data?.autoApproval !== undefined ? fetcher.data.autoApproval : setting.autoApproval;
-  console.log("current value", current);
+  //console.log("current value", current);
 
   const currentAppApiKey =
     fetcher.data?.appApiKey !== undefined ? fetcher.data.appApiKey : appApiKey;
 
   const handleToggle = () => {
+    console.log("handle working");
     const formData = new FormData();
     formData.append("enable", (!current).toString());
     formData.append("shopId", setting.shopId);
@@ -215,7 +216,7 @@ export default function ExtensionSettings() {
         <s-section>
           <s-box padding="base" border="base" borderRadius="base" background="base">
             <s-stack direction="block" gap="base">
-              <s-heading>Auto Approval Settings</s-heading>
+              <s-heading>Auto Approval Settings1</s-heading>
               <s-text>
                 Control whether new company applications are automatically approved or require
                 manual review.
