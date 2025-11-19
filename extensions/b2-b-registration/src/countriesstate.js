@@ -1,5 +1,5 @@
 // extension/src/countries.js
-const API_BASE = "https://geo-terrain-elvis-photo.trycloudflare.com/api/countryslist"; // matches app/routes/api.countrieslist.jsx
+const API_BASE = "https://shopy-onboard-b2b.onrender.com/api/countryslist"; // matches app/routes/api.countrieslist.jsx
 
 let countriesCache = null;
 const statesCache = new Map(); // key: ISO (uppercase) -> states array
