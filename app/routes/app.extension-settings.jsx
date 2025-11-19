@@ -1,15 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import cryptoNode from "crypto";
-import { PrismaClient } from "@prisma/client";
 import { useLoaderData, useFetcher } from "react-router";
 import { authenticate } from "../shopify.server";
-import { shopid } from "./query";
-
-let prisma;
-if (!globalThis.prisma) {
-  globalThis.prisma = new PrismaClient();
-}
-prisma = globalThis.prisma;
+import prisma from "../db.server"
 
 // 🧩 Load setting from DB (ensure one exists) + load existing app API key from session table
 export const loader = async ({ request }) => {
