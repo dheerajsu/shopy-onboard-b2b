@@ -1,7 +1,6 @@
 import { getShopifyAdminContext,graphQLRequest } from "./admin/utils"; 
-import { PrismaClient } from '@prisma/client';
+import prisma from "../db.server";
 import {createCompanyMutation , companyContactRole, companyContactAssignRole, shopid} from './query';
-export const prisma = new PrismaClient();
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",

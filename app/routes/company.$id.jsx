@@ -1,15 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../db.server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { useLoaderData, useNavigate, useParams } from "react-router";
 import { authenticate } from "../shopify.server";
 import  EditAddressesForm  from "./appeditAddress";
 import  LogoutcustomerCreatecontact  from "./logoutCreateCustomer";
-
-let prisma;
-if (!globalThis.prisma) {
-  globalThis.prisma = new PrismaClient();
-}
-prisma = globalThis.prisma;
 
 export const loader = async ({ request, params }) => {
   await authenticate.admin(request);

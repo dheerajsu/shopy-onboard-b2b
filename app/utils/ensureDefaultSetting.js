@@ -1,7 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-let prisma;
-if (!globalThis.prisma) globalThis.prisma = new PrismaClient();
-prisma = globalThis.prisma;
+import prisma from "../db.server";
 
 export async function ensureDefaultSetting(shopId) {
   await prisma.setting.upsert({

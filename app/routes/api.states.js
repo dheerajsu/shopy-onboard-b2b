@@ -1,7 +1,5 @@
 // routes/api/states.js
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from "../db.server";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

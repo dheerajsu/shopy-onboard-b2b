@@ -1,5 +1,5 @@
 import { useFetcher, useLoaderData } from "react-router";
-import { PrismaClient } from "@prisma/client";
+import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 import { useState, useEffect } from "react";
 import { createnewcustomer } from "../routes/query";
@@ -11,11 +11,6 @@ const CORS_HEADERS = {
   "Content-Type": "application/json",
 };
 
-let prisma;
-if (!globalThis.__prisma) {
-  globalThis.__prisma = new PrismaClient();
-}
-prisma = globalThis.__prisma;
 
 export const loader = async ({ request, params }) => {
   const { session, admin } = await authenticate.admin(request);

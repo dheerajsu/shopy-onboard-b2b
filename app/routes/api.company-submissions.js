@@ -1,8 +1,6 @@
 import { graphQLRequest } from "./admin/utils";
-import { PrismaClient } from "@prisma/client";
-import {get_customer_exist} from "./query"
-
-const prisma = new PrismaClient();
+import prisma from "../db.server";
+import {get_customer_exist} from "./query";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
