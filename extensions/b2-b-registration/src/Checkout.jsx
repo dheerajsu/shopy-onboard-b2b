@@ -231,7 +231,7 @@ function SimpleB2BForm() {
   };
 
   // 🔹 NEW effect: check if customer already has a company
-  const fetchurl = `https://geo-terrain-elvis-photo.trycloudflare.com/apps/proxy/b2b-registration`;
+  const fetchurl = `https://shopy-onboard-b2b.onrender.com/apps/proxy/b2b-registration`;
   useEffect(() => {
     let mounted = true;
     (async () => {

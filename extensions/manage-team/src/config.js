@@ -1,1 +1,1 @@
-export const BASE_URL = "https://geo-terrain-elvis-photo.trycloudflare.com";
+export const BASE_URL = "https://shopy-onboard-b2b.onrender.com";
