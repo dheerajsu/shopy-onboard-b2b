@@ -1,5 +1,5 @@
-import { graphQLRequest } from "./admin/utils";
 import prisma from "../db.server";
+import { graphQLRequest } from "./admin/utils";
 import {get_customer_exist} from "./query";
 
 const CORS_HEADERS = {
