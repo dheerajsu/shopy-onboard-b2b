@@ -28,7 +28,7 @@ model Session {
   email         String?
   accountOwner  Boolean   @default(false)
   locale        String?
-  appapikey     String?   @unique
+  appapikey     String?
   collaborator  Boolean?  @default(false)
   emailVerified Boolean?  @default(false)
 }
