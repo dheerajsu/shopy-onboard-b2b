@@ -9,13 +9,10 @@ export const loader = async ({ request }) => {
   const { session, admin } = await authenticate.admin(request);
   const shopDomain = session.shop;
 
-  // find setting for this shop
-  // If shopId is not unique in your schema, consider using findFirst instead of findUnique
   let setting = await prisma.setting.findUnique({
     where: { shopId: shopDomain },
   });
 
-  // if not found, create a default one
   if (!setting) {
     setting = await prisma.setting.create({ 
       data: {
@@ -26,15 +23,11 @@ export const loader = async ({ request }) => {
   }
 
   // try to load existing app API key from session table
-  let sessionRecords = await prisma.session
-    .findMany({
+  let sessionRecords = await prisma.session.findMany({
       where: { shop: shopDomain },
     })
     .catch(() => []);
-  const appApiKey =
-    sessionRecords && sessionRecords.length > 0
-      ? sessionRecords[0].appapikey ?? ""
-      : "";
+  const appApiKey = sessionRecords && sessionRecords.length > 0 ? sessionRecords[0].appapikey ?? "" : "";
 
   return Response.json({
     apiKey: process.env.SHOPIFY_API_KEY || "",
@@ -43,9 +36,9 @@ export const loader = async ({ request }) => {
   });
 };
 
-// helper to generate server key (48 hex chars)
+// helper to generate server key (30 hex chars when using 15 bytes)
 const generateServerApiKey = () => {
-  return cryptoNode.randomBytes(24).toString("hex");
+  return cryptoNode.randomBytes(15).toString("hex");
 };
 
 // 🧩 Action handles both toggle and saving app API key
@@ -83,7 +76,8 @@ export const action = async ({ request }) => {
         );
       }
 
-      return Response.json({ success: true, appApiKey: appapikey, updated: result.count });
+      // Return appApiKey and mark type so front-end can distinguish this response
+      return Response.json({ success: true, type: "appapikey", appApiKey: appapikey, updated: result.count });
     } catch (err) {
       console.error("Error updating appapikey:", err);
       return Response.json({ success: false, error: err?.message ?? "unknown error" }, { status: 500 });
@@ -110,51 +104,44 @@ export const action = async ({ request }) => {
     });
   }
 
-  return Response.json({ success: true, autoApproval: enable });
+  // Return type so front-end knows this is the toggle response
+  return Response.json({ success: true, type: "toggle", autoApproval: enable });
 };
 
 // 🧩 UI
 export default function ExtensionSettings() {
   const { apiKey, setting, appApiKey } = useLoaderData();
-  const fetcher = useFetcher();
+
+  // TWO separate fetchers:
+  // - settingsFetcher -> used only for the toggle button
+  // - keyFetcher -> used only for save/generate key actions
+  const settingsFetcher = useFetcher();
+  const keyFetcher = useFetcher();
 
   // local state for API key input
   const [key, setKey] = useState("");
 
-  // on mount: prefer fetcher optimistic response if present, otherwise loader value
+  // on mount OR when keyFetcher returns data: prefer keyFetcher optimistic response if present, otherwise loader value
   useEffect(() => {
-    const fromFetcher = fetcher.data?.appApiKey;
+    const fromFetcher = keyFetcher.data?.appApiKey;
     const initial = fromFetcher !== undefined ? fromFetcher : appApiKey;
 
-    if (initial && initial.trim() !== "") {
-      setKey(initial);
-      return;
-    }
+    setKey(initial || "");
+  }, [keyFetcher.data, appApiKey]);
 
-    // if no key present, generate client-side key (UUID without dashes) for immediate UX
-    try {
-      const clientKey =
-        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-          ? crypto.randomUUID().replace(/-/g, "")
-          : [...Array(24)].map(() => Math.floor(Math.random() * 16).toString(16)).join("");
-      setKey(clientKey);
-    } catch (e) {
-      setKey(Math.random().toString(36).slice(2, 18));
-    }
-  }, [fetcher.data, appApiKey]);
-
+  // autoApproval state comes from settingsFetcher if present, else loader
   const current =
-    fetcher.data?.autoApproval !== undefined ? fetcher.data.autoApproval : setting.autoApproval;
+    settingsFetcher.data?.autoApproval !== undefined ? settingsFetcher.data.autoApproval : setting.autoApproval;
 
   const currentAppApiKey =
-    fetcher.data?.appApiKey !== undefined ? fetcher.data.appApiKey : appApiKey;
+    keyFetcher.data?.appApiKey !== undefined ? keyFetcher.data.appApiKey : appApiKey;
 
   const handleToggle = () => {
-    console.log("handle working");
     const formData = new FormData();
     formData.append("enable", (!current).toString());
     formData.append("shopId", setting.shopId);
-    fetcher.submit(formData, { method: "post" });
+    // use settingsFetcher (isolated)
+    settingsFetcher.submit(formData, { method: "post" });
   };
 
   const handleSaveKey = (e) => {
@@ -164,7 +151,19 @@ export default function ExtensionSettings() {
     formData.append("shopId", setting.shopId);
     const val = (formData.get("appapikey") || "").toString().replace(/\s+/g, "");
     formData.set("appapikey", val);
-    fetcher.submit(formData, { method: "post" });
+    // use keyFetcher (isolated)
+    keyFetcher.submit(formData, { method: "post" });
+  };
+
+  // Generate key button handler — submits empty appapikey so server will generate & save it
+  const handleGenerateKey = (e) => {
+    e && e.preventDefault();
+    const formData = new FormData();
+    // sending an empty string for "appapikey" triggers server-side generation in action()
+    formData.append("appapikey", "");
+    formData.append("shopId", setting.shopId);
+    // use keyFetcher (isolated)
+    keyFetcher.submit(formData, { method: "post" });
   };
 
   const onKeyDownPreventSpace = (ev) => {
@@ -192,7 +191,6 @@ export default function ExtensionSettings() {
   };
 
   return (
-    // NOTE: Do NOT re-wrap this route in AppProvider. AppProvider is already provided at top level (app.jsx).
     <s-page title="Extension Configuration">
       <s-section>
         <s-box padding="base" border="base" borderRadius="base" background="base">
@@ -204,13 +202,27 @@ export default function ExtensionSettings() {
             </s-text>
 
             <s-stack direction="block" gap="base">
-              <s-text tone={current ? "success" : "critical"}>
-                Auto Approval is <strong>{current ? "Enabled" : "Disabled"}</strong>
-              </s-text>
+              
 
-              <s-button tone={current ? "critical" : "success"} variant="primary" onClick={handleToggle}>
+              {/* <s-button tone={current ? "critical" : "success"} variant="primary" onClick={handleToggle}>
                 {current ? "Disable" : "Enable"}
-              </s-button>
+              </s-button> */}
+              <s-stack direction="inline" gap="base">
+                <s-switch
+                  onClick={handleToggle}
+                  checked={current}
+                />
+                <s-text tone={current ? "success" : "critical"}>
+                  Auto Approval is <strong>{current ? "Enabled" : "Disabled"}</strong>
+                </s-text>
+              </s-stack>
+
+              {/* Show toggle saving state from settingsFetcher only */}
+              {settingsFetcher.state === "submitting" ? (
+                <s-text>Updating settings…</s-text>
+              ) : settingsFetcher.data?.type === "toggle" && settingsFetcher.data?.success ? (
+                <s-text tone="success">Updated</s-text>
+              ) : null}
             </s-stack>
           </s-stack>
         </s-box>
@@ -221,49 +233,41 @@ export default function ExtensionSettings() {
         <s-box padding="base" border="base" borderRadius="base" background="base">
           <s-stack direction="block" gap="base">
             <s-heading>App API Key</s-heading>
-            <s-text>
-              Store a custom API key for your app for this shop. This value is saved to the
-              session table under <code>appapikey</code>. Spaces are not allowed in this key.
-            </s-text>
-
             <form onSubmit={handleSaveKey}>
               <s-stack direction="block" gap="base">
-                <s-field>
-                  <label>API Key</label>
-                  <input
-                    name="appapikey"
-                    value={key}
-                    onChange={onChangeHandler}
-                    onKeyDown={onKeyDownPreventSpace}
-                    onPaste={onPasteStripSpaces}
-                    placeholder="Auto-generated API Key"
-                    style={{
-                      width: "100%",
-                      padding: "8px 10px",
-                      borderRadius: 6,
-                      border: "1px solid #d1d5db",
-                    }}
-                    autoComplete="off"
-                  />
-                </s-field>
-
                 <s-stack direction="inline" gap="base">
+                
+                 <s-text-field placeholder="Api Key" 
+                  onChange={onChangeHandler} 
+                  value={key} 
+                  onKeyDown={onKeyDownPreventSpace} 
+                  onPaste={onPasteStripSpaces} 
+                  autoComplete="off" />
+               
+                  <s-button onClick={() => navigator.clipboard.writeText(key)}>
+                    <s-icon type="duplicate" title="copy key"/>
+                  </s-button>
+                  
+                </s-stack>
+              
+                <s-stack direction="inline" gap="base">
+                  {/* Generate Key button — will trigger server-side generation & auto-save */}
                   <s-button
-                    type="submit"
-                    variant="primary"
-                    onClick={() => {
-                      setKey((k) => (k ? k.replace(/\s+/g, "") : k));
-                    }}
+                    type="button"
+                    variant="secondary"
+                    onClick={handleGenerateKey}
+                    disabled={keyFetcher.state === "submitting"}
                   >
-                    Save API Key
+                    {keyFetcher.state === "submitting" ? "Generating…" : "Generate and save Key"}
                   </s-button>
 
-                  {fetcher.state === "submitting" ? (
+                  {/* Show keyFetcher status only (isolated) */}
+                  {keyFetcher.state === "submitting" ? (
                     <s-text>Saving…</s-text>
-                  ) : fetcher.data?.success ? (
+                  ) : keyFetcher.data?.type === "appapikey" && keyFetcher.data?.success ? (
                     <s-text tone="success">Saved</s-text>
-                  ) : fetcher.data?.error ? (
-                    <s-text tone="critical">{fetcher.data.error}</s-text>
+                  ) : keyFetcher.data?.error ? (
+                    <s-text tone="critical">{keyFetcher.data.error}</s-text>
                   ) : null}
                 </s-stack>
 
