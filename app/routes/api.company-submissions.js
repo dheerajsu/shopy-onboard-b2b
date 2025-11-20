@@ -9,7 +9,7 @@ const CORS_HEADERS = {
   "Content-Type": "application/json",
 };
 
-export async function gettokenval(shopDomain){
+async function gettokenval(shopDomain){
   let sessionRow;
   try {
     sessionRow = await prisma.session.findFirst({
