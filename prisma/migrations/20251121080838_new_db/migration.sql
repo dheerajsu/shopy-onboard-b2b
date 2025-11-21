@@ -13,6 +13,7 @@ CREATE TABLE `Session` (
     `email` VARCHAR(191) NULL,
     `accountOwner` BOOLEAN NOT NULL DEFAULT false,
     `locale` VARCHAR(191) NULL,
+    `appapikey` VARCHAR(191) NULL,
     `collaborator` BOOLEAN NULL DEFAULT false,
     `emailVerified` BOOLEAN NULL DEFAULT false,
 
