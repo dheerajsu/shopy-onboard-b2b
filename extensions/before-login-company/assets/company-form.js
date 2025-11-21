@@ -5,7 +5,7 @@ class CompanyForm {
     this.options = options;
     
     // Your app's development URL
-    this.endpointBaseUrl = "https://geo-terrain-elvis-photo.trycloudflare.com";
+    this.endpointBaseUrl = "https://shopy-onboard-b2b.onrender.com";
     
     // State for same as shipping address
     this.sameAsShipping = false;
