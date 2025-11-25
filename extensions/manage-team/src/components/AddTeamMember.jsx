@@ -13,6 +13,7 @@ export default function AddTeamMember({ inviteUrl, companyId, companyLocationId,
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteMessage, setInviteMessage] = useState("");
   const [inviteError, setInviteError] = useState("");
+  const [submitted, setSubmitted] = useState(true);
 
   const doInviteSubmit = async () => {
     setInviteMessage("");
@@ -65,13 +66,13 @@ export default function AddTeamMember({ inviteUrl, companyId, companyLocationId,
 
         setInviteMessage("Team member invited successfully.");
         // refresh locations/team list
-
+        setSubmitted(false);
         // reset and close
         setTimeout(() => {
+          setSubmitted(true);
           setInviteFirst(""); setInviteLast(""); setInviteEmail(""); setInviteTitle("");
           setInvitePermission("Location admin");
           setInviteMessage("");
-          //ui.overlay.close('my-modal');
         }, 1000);
       } else {
         setInviteError(json?.message || "Failed to invite team member.");
