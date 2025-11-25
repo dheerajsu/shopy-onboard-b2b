@@ -8,6 +8,22 @@ const CORS = {
   "Content-Type": "application/json",
 };
 
+export const loader = async ({ request }) => {
+  // Handle preflight
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 200, headers: CORS });
+  }
+
+  // GET (or any other non-POST) -> respond with "method not allowed"
+  return new Response(
+    JSON.stringify({
+      success: false,
+      message: "This route only accepts POST requests. Please send a POST to /api/create-company",
+    }),
+    { status: 405, headers: CORS }
+  );
+};
+
 function jsonResponse(obj, status = 200) {
   return new Response(JSON.stringify(obj), { status, headers: CORS });
 }
