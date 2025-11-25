@@ -1,5 +1,4 @@
 import prisma from "../db.server";
-import { Prisma } from "@prisma/client"; // add this import
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
