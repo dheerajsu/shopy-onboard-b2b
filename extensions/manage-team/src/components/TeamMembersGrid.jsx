@@ -233,7 +233,7 @@ export default function TeamMembersGrid({ apiUrl, locationId, newlocationName, s
 
                   <s-box>
                       
-                        {currentUserIsLocationAdmin ? (
+                        {/* {currentUserIsLocationAdmin ? (
                         <>
                           <s-button command="--show" commandFor={`edit-member-${m.roleAssignmentId}`}><s-icon type="edit" /></s-button>
                           <s-modal id={`edit-member-${m.roleAssignmentId}`} heading="Manage Team Member">
@@ -253,6 +253,27 @@ export default function TeamMembersGrid({ apiUrl, locationId, newlocationName, s
                         </>
                         ) : (
                           null
+                        )} */}
+                        {permsText.includes("Location admin") && (
+                          <>
+                          <s-button command="--show" commandFor={`edit-member-${m.roleAssignmentId}`}>
+                            <s-icon type="edit" />
+                          </s-button>
+                          <s-modal id={`edit-member-${m.roleAssignmentId}`} heading="Manage Team Member">
+                               <TeamMemberEditForm
+                                member={m}
+                                locationId={locationId}
+                                apiUrl={editlocationmembers}
+                                //onCancel={() => ui.overlay.close(`edit-member-${m.roleAssignmentId}`)}
+                                onSaved={(updated) => {
+                                  replaceMemberInState(updated);
+                                  setSuccessMessage(`${updated.displayName ?? updated.firstName ?? "Member"} updated`);
+                                  setNewContectRoleId(updated.roleAssignmentId)
+                                  //ui.overlay.close(`edit-member-${m.roleAssignmentId}`);
+                                }}
+                              />
+                          </s-modal>
+                        </>
                         )}
                     </s-box>
                 </s-grid>
