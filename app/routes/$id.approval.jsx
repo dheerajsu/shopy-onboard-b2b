@@ -76,12 +76,10 @@ export const action = async ({ request }) => {
     const formData = await request.formData();
     const companyData = JSON.parse(formData.get('companyData') || '{}');
 
-    //console.log('Company data received:', companyData);
-
     // Parse billing and shipping data from the company
     let billingData = {};
     let shippingData = {};
-
+    
     try {
       billingData = companyData.billing;
       shippingData = companyData.shipping;
@@ -89,8 +87,24 @@ export const action = async ({ request }) => {
       console.error('Error parsing billing/shipping data:', parseError);
     }
 
+    const billingShippingSame = !!companyData.billingshippingsame;
+    // If billing & shipping are same, use billing for both
+    const finalBillingData = billingShippingSame ? shippingData : billingData;
+    const finalShippingData = shippingData; // always billing from billingData
+
     // Use shipping address if available, otherwise use billing address
-    const addressData = shippingData || billingData || {};
+    //const addressData = shippingData || billingData || {};
+
+    const buildAddressInput = (addr = {}) => ({
+      firstName: addr.firstName || "",
+      lastName: addr.lastName || "",
+      address1: addr.address1 || "",
+      city: addr.city || "City",
+      zip: addr.zip || "",
+      phone: addr.phone || "",
+      countryCode: addr.countryCode || "IN", // adjust if needed
+      zoneCode: addr.province || ""
+    });
 
     const variables = {
       input: {
@@ -106,27 +120,24 @@ export const action = async ({ request }) => {
             paymentTermsTemplateId: companyData.paymentTerms
           },
           taxExempt: true,
-          shippingAddress: {
-            firstName: addressData.firstName,
-            lastName: addressData.lastName,
-            address1: addressData.address1,
-            city: "City",
-            zip: addressData.zip,
-            phone: addressData.phone,
-            countryCode: addressData.countryCode
-          },
-          billingSameAsShipping: true
+          shippingAddress: buildAddressInput(finalShippingData),
+          ...(billingShippingSame
+          ? {
+              billingSameAsShipping: true
+              // Shopify uses shippingAddress as billing in this case
+            }
+          : {
+              billingSameAsShipping: false,
+              billingAddress: buildAddressInput(finalBillingData)
+            })
 
         }
       }
     };
 
-    // console.log("how to get customer id",companyData);
-    // return "testing";
     // Execute the GraphQL mutation
     const response = await admin.graphql(companyCreate, { variables });
     const result = await response.json();
-    //console.log("reuslt of company create--",result);
     if (result.data?.companyCreate?.company) {
       const shopifyCompany = result.data.companyCreate.company;
       const companyGid = shopifyCompany.id;
@@ -366,6 +377,8 @@ export default function CompanyApprovalRoute() {
       contactInfoLastName: company.contactInfoLastName,
       locationName: `${company.name} Location` || "Main Location",
       customerId: company.companycontact?.baseCustomerId,
+      billingshippingsame:  company?.billingshippingsame,
+
       // Include form settings
       ...formData
     };
