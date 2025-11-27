@@ -370,7 +370,7 @@ export default function CompanyApprovalRoute() {
       ...formData
     };
 
-    console.log('Submitting company data:', companyData);
+    //console.log('Submitting company data:', companyData);
 
     // Submit using fetcher
     fetcher.submit(

@@ -18,7 +18,7 @@ export const loader = async ({ request, params }) => {
 export default function EditAddressesForm() {
   const { company } = useLoaderData() ?? {};
   const fetcher = useFetcher();
-  console.log("company data", company);
+  //console.log("company data", company);
   
   const s = company?.shipping ?? {};
   const b = company?.billing ?? {};

@@ -2,7 +2,7 @@ import { useFetcher, useLoaderData } from "react-router";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 import { useState, useEffect } from "react";
-import { createnewcustomer } from "../routes/query";
+import { createnewcustomer, get_customer_exist } from "../routes/query";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -20,14 +20,14 @@ export const loader = async ({ request, params }) => {
 export default function LogoutcustomerCreatecontact() {
   const { company } = useLoaderData() ?? {};
   const fetcher = useFetcher();
-  
+
   useEffect(() => {
     if (!fetcher.data) return;
     if (fetcher.data.success) {
       if (typeof window !== "undefined" && window.shopify?.toast?.show) {
         window.shopify.toast.show("Customer created successfully");
       } else {
-        console.log("Customer created successfully");
+        //console.log("Customer created successfully");
       }
     } else if (fetcher.data.error) {
       if (typeof window !== "undefined" && window.shopify?.toast?.show) {
@@ -40,7 +40,7 @@ export default function LogoutcustomerCreatecontact() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     const companyform = {
       savedvalues: company
     }
@@ -67,12 +67,12 @@ export default function LogoutcustomerCreatecontact() {
 
 export async function action({ request }) {
   const { admin } = await authenticate.admin(request);
-  
+
   try {
     const formData = await request.formData();
     const companyform = JSON.parse(formData.get("companyform"));
     const companyData = companyform.savedvalues;
-
+   
     // Prepare customer data for Shopify
     const customerData = {
       first_name: companyData.customerFirstName || companyData.contactInfoFirstName || "",
@@ -89,71 +89,116 @@ export async function action({ request }) {
         lastName: customerData.last_name
       }
     };
-    console.log("variables are",customervariable);
 
-    // Execute the GraphQL mutation and capture the response
-    const response = await admin.graphql(createnewcustomer, { variables: customervariable });
-    const responseData = await response.json();
+    const customervariables = {
+      emailid: customerData.email
+    };
+    const responsecustomer = await admin.graphql(get_customer_exist, { variables: customervariables });
+    const customerjson = await responsecustomer.json();
+    if (customerjson.errors) {
+      console.error("GraphQL errors (get_customer_exist):", customerjson.errors);
+    }
     
-    //console.log("Customer creation response:", responseData);
-    console.log("error is",responseData.data.customerCreate.userErrors);
-    let errors = responseData.data.customerCreate.userErrors;
-    // console.log("error is22",responseData.data.userErrors);
-    // // Check if there were any errors in the GraphQL response
-    if (errors && errors.length > 0) {
-      throw new Error(errors[0].message);
-    }
+    const customerNode = customerjson?.data?.customerByIdentifier ?? null;
+    const existornot = !!customerNode;
 
-    // Extract Shopify customer ID from response
-    const shopifyCustomerId = responseData.data?.customerCreate?.customer?.id;
-    if (!shopifyCustomerId) {
-      throw new Error("Failed to get customer ID from Shopify response");
-    }
+    if (existornot === false) {
+      const response = await admin.graphql(createnewcustomer, { variables: customervariable });
+      const responseData = await response.json();
 
-    // 1. Create entry in companycontact table
-    const companyContact = await prisma.companycontact.create({
-      data: {
-        baseCustomerId: shopifyCustomerId,
-        customername: `${customerData.first_name} ${customerData.last_name}`.trim(),
-        email: customerData.email,
-        companystatus: false
+      let errors = responseData.data.customerCreate.userErrors;
+
+      if (errors && errors.length > 0) {
+        throw new Error(errors[0].message);
       }
-    });
 
-    console.log("Company contact created:", companyContact);
+      // Extract Shopify customer ID from response
+      const shopifyCustomerId = responseData.data?.customerCreate?.customer?.id;
+      if (!shopifyCustomerId) {
+        throw new Error("Failed to get customer ID from Shopify response");
+      }
 
-    // 2. Update company table with companycontact ID and status
-    if (companyData.id) {
-      const updatedCompany = await prisma.company.update({
-        where: { id: companyData.id },
+      // 1. Create entry in companycontact table
+      const companyContact = await prisma.companycontact.create({
         data: {
-          customerId: companyContact.id, // Set to companycontact ID
-          aurthorizedStatus: true, // Set to true
-          companyStatus: 'open'
+          baseCustomerId: shopifyCustomerId,
+          customername: `${customerData.first_name} ${customerData.last_name}`.trim(),
+          email: customerData.email,
+          companystatus: false,
+          shopId: companyData.shopId
         }
       });
-      console.log("Company updated:", updatedCompany);
-    }
 
-    // Return success response for the toast
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        message: "Customer created successfully and company record updated"
-      }),
-      {
-        status: 200,
-        headers: CORS_HEADERS,
+      // 2. Update company table with companycontact ID and status
+      if (companyData.id) {
+        const updatedCompany = await prisma.company.update({
+          where: { id: companyData.id },
+          data: {
+            customerId: companyContact.id, // Set to companycontact ID
+            aurthorizedStatus: true, // Set to true
+            companyStatus: 'open'
+          }
+        });
+        //console.log("Company updated:", updatedCompany);
       }
-    );
+
+      // Return success response for the toast
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Customer created successfully and company record updated"
+        }),
+        {
+          status: 200,
+          headers: CORS_HEADERS,
+        }
+      );
+    }else{
+      const shopifyCustomerId1 = customerjson.data.customerByIdentifier?.id;
+      // 1. Create entry in companycontact table
+      const companyContact = await prisma.companycontact.create({
+        data: {
+          baseCustomerId: shopifyCustomerId1,
+          customername: `${customerData.first_name} ${customerData.last_name}`.trim(),
+          email: customerData.email,
+          companystatus: false,
+          shopId: companyData.shopId
+        }
+      });
+
+      // 2. Update company table with companycontact ID and status
+      if (companyData.id) {
+        const updatedCompany = await prisma.company.update({
+          where: { id: companyData.id },
+          data: {
+            customerId: companyContact.id, // Set to companycontact ID
+            aurthorizedStatus: true, // Set to true
+            companyStatus: 'open'
+          }
+        });
+      }
+
+      // Return success response for the toast
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Customer already created and company record updated"
+        }),
+        {
+          status: 200,
+          headers: CORS_HEADERS,
+        }
+      );
+
+    }
 
   } catch (error) {
     console.error("Error creating customer:", error);
-    
+
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message || "Failed to create customer" 
+      JSON.stringify({
+        success: false,
+        error: error.message || "Failed to create customer"
       }),
       {
         status: 500,
