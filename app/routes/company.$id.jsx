@@ -4,6 +4,7 @@ import { useLoaderData, useNavigate, useParams } from "react-router";
 import { authenticate } from "../shopify.server";
 import  EditAddressesForm  from "./appeditAddress";
 import  LogoutcustomerCreatecontact  from "./logoutCreateCustomer";
+import {boundary} from "@shopify/shopify-app-react-router/server";
 
 export const loader = async ({ request, params }) => {
   await authenticate.admin(request);
@@ -275,3 +276,7 @@ export default function CompanyDetailRoute() {
     </AppProvider>
   );
 }
+
+export const headers = (headersArgs) => {
+  return boundary.headers(headersArgs);
+};

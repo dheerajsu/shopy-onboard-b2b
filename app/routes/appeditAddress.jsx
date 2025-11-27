@@ -310,7 +310,7 @@ export default function EditAddressesForm() {
               <s-stack gap="base">
                 <s-checkbox
                   name="billing_sameAsShipping"
-                  label="Same as shipping address"
+                  label="Billing Same as shipping address"
                   checked={billingSame}
                   onChange={(e) => {
                     const val = e.target.checked;

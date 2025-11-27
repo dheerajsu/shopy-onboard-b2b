@@ -3,6 +3,7 @@ import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { useLoaderData, useNavigate, useSearchParams } from "react-router";
 import { useState, useMemo, useEffect } from "react";
 import { authenticate } from "../shopify.server";
+import {boundary} from "@shopify/shopify-app-react-router/server";
 
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
@@ -355,3 +356,7 @@ export default function CompaniesPage() {
     </s-page>
   );
 }
+
+export const headers = (headersArgs) => {
+  return boundary.headers(headersArgs);
+};
