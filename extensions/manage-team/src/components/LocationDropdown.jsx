@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "preact/hooks";
 import '@shopify/ui-extensions/preact';
-import {render} from 'preact';
+import { render } from 'preact';
 import { BASE_URL } from "../config.js";
 
 const DEFAULT_API_URL = `${BASE_URL}/apps/proxy/company-locations`;
@@ -14,13 +14,14 @@ export default function LocationDropdown({
   apiUrl = DEFAULT_API_URL,
   createdLocation = null,
 }) {
-  
+
   const [filter, setFilter] = useState("");
   const [locations, setLocations] = useState([]);
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const debounceTimeout = useRef();
+  const [submitted, setSubmitted] = useState(true);
 
   const fetchLocations = useCallback(
     async (search = "") => {
@@ -93,52 +94,51 @@ export default function LocationDropdown({
 
   return (
     <s-stack>
-      <s-stack>
-        <s-popover id="popover-locations-id" blockSize='auto'>
-        <s-box background="subdued" borderRadius="base" borderWidth="base" padding="base" paddingInlineEnd='large'>
-          <s-stack>
+      <s-stack gap="base">
+        <s-modal id="popover-locations-id" padding="base" size="large-100" heading="Please select location">
+          
             <s-text-field
-              placeholder="Search for a location"
               value={filter}
-              onChange={(e) => {const val = /** @type {HTMLInputElement} */ (e.target).value; setFilter(val)}}
+              onChange={(e) => { const val = /** @type {HTMLInputElement} */ (e.target).value; setFilter(val) }}
+              icon="search"
             />
-          </s-stack>
+          
+          <s-box borderRadius="base" borderWidth="base">
+            <s-scroll-box maxBlockSize="5000px" blockSize="500px">
+              {loading ? (
+                <s-text>Loading…</s-text>
+              ) : locations.length === 0 ? (
+                <s-text>No locations</s-text>
+              ) : (
+                locations.map((loc) => (
+                  <s-box key={loc.id} minBlockSize="50px" background="transparent">
+                    <s-clickable
+                      padding="base"
+                      target="auto"
+                      onClick={() => {
+                        // @ts-ignore
+                        onSelect(loc.id, loc);
+                      }}
+                    >
+                      <s-stack columnGap="base" direction="inline">
+                        <s-text>
+                          {highlightMatch(loc.name || "(unnamed)", filter.trim())}
+                        </s-text>
+                        <s-text>
+                          {selectedId === loc.id && (
+                            <s-icon tone="success" type='check-circle' />
+                          )}
+                        </s-text>
+                      </s-stack>
+                    </s-clickable>
+                    <s-divider />
+                  </s-box>
+                ))
+              )}
+            </s-scroll-box>
+          </s-box>
 
-          <s-scroll-box maxBlockSize="300px">
-            {loading ? (
-              <s-text>Loading…</s-text>
-            ) : locations.length === 0 ? (
-              <s-text>No locations</s-text>
-            ) : (
-              locations.map((loc) => (
-                <s-box key={loc.id} background="subdued" border="base" minBlockSize="50px">
-                
-                  <s-clickable
-                    padding="base"
-                    target="auto"
-                    onClick={() => {
-                      // @ts-ignore
-                      onSelect(loc.id, loc);
-                    }}
-                  >
-                    <s-stack columnGap="base">
-                      <s-text>
-                        {highlightMatch(loc.name || "(unnamed)", filter.trim())}
-                      </s-text>
-                      <s-text>
-                        {selectedId === loc.id && (
-                          <s-icon tone="success" type='check-circle' />
-                        )}
-                      </s-text>
-                    </s-stack>
-                  </s-clickable>
-                
-                </s-box>
-              ))
-            )}
-          </s-scroll-box>
-        </s-box> 
-        </s-popover>
+        </s-modal>
       </s-stack>
       {error && (
         <s-banner tone="critical">
