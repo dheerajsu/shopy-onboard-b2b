@@ -15,7 +15,6 @@ async function getCtxValue(request) {
 
   const ctx = await getShopifyAdminContext(request);
   const shopId = ctx.shopDomain; // or however you extract it
-  //console.log("shop id is",shopId);
   return { ctx, staticcompanyid, decoded, authHeader , shopId};
 }
 
@@ -41,12 +40,13 @@ export const loader = async ({ request }) => {
   if (!customerGid) {
     return jsonResponse({ success: false, message: "Missing customer ID" }, 400);
   }
-
+ 
   try {
     // 1️⃣ Check local DB first
     const contact = await prisma.companycontact.findUnique({
       where: { baseCustomerId: customerGid },
     });
+    console.log("value found of not",contact);
     if (contact) {
       const company = await prisma.company.findFirst({
         where: { customerId: contact.id },
@@ -66,10 +66,10 @@ export const loader = async ({ request }) => {
         });
       }
     }
-
     // 2️⃣ If not found locally, check Shopify (optional fallback)
     const variables = { customerId: customerGid };
     const resp = await graphQLRequest(ctx, companyQuery, variables);
+    console.log("what is the response",resp);
     const shopifyCompany = resp?.customer?.companyContactProfiles?.[0]?.company ?? null;
 
     if (shopifyCompany) {
@@ -195,9 +195,82 @@ export const action = async ({ request }) => {
       }
     }
 
-    const variables = { input };
+    // --- NEW: fetch presets for this shop ---
+    const buildAddressInput = (addr = {}) => ({
+      firstName: addr.firstName || "",
+      lastName: addr.lastName || "",
+      address1: addr.address1 || "",
+      city: addr.city || "City",
+      zip: addr.zip || "",
+      phone: addr.phone || "",
+      countryCode: addr.countryCode || "IN", // adjust if needed
+      zoneCode: addr.province || ""
+    });
+    
+      const presetsRaw = await prisma.preset.findMany({
+        where: { shopId: shopId, isDefault: true },
+        orderBy: [
+          { isDefault: "desc" },
+          { id: "asc" }
+        ],
+      });
+      const preset = presetsRaw[0];
+      const variables = { input };
+      const getclientvalues = variables.input;
+      console.log("preset values",presetsRaw);
+      console.log("variables are",variables);
+      console.log("variables shipping billing info",getclientvalues.companyLocation.shippingAddress);
+      // console.log("company name is",getclientvalues.company.name);
+      // console.log("preset table",preset.paymentTerms);
+      
+      const shippingFromClient = getclientvalues.companyLocation.shippingAddress;
+      const billingSameFromClient = getclientvalues.companyLocation.billingSameAsShipping;
+      const billingFromClient = getclientvalues.companyLocation.billingAddress;
+      
+      console.log(`shipping address ${shippingFromClient}, billing same or not ${billingSameFromClient}, billing address ${billingFromClient}`)
+
+      const newvariable = {
+        company: {
+          name: getclientvalues.company.name,
+          note: preset.communication || "",
+          externalId: getclientvalues.company.externalId,
+        },
+        companyLocation: {
+          name: getclientvalues.companyLocation.name || "Main Location",
+          buyerExperienceConfiguration: {
+            editableShippingAddress: preset.allowOneTimeShipAddress,
+            paymentTermsTemplateId: preset.paymentTerms?.gid || null,
+            // flip boolean
+            checkoutToDraft: !preset.checkoutOrderDraft,
+            // convert % string → float
+            deposit: preset.requireDeposit
+                      ? { percentage: parseFloat(preset.requireDeposit)} 
+                      : null, 
+          },
+          // "true"/"false"/boolean → strict boolean
+          taxExempt: preset.taxes === 'true', //need to update
+
+          // addresses
+          shippingAddress: buildAddressInput(shippingFromClient),
+
+           ...(billingSameFromClient
+              ? {
+                  billingSameAsShipping: true,
+                }
+              : {
+                  billingSameAsShipping: false,
+                  billingAddress: buildAddressInput(billingFromClient),
+                }),
+          },
+      };
+
+      console.log("final variable is",newvariable);
+      //return "ignore for now";
+    
     //console.log("all variables ",variables);
-    const response = await graphQLRequest(ctx, companyCreate, variables);
+    const companyvariables = { input: newvariable };
+    const response = await graphQLRequest(ctx, companyCreate, companyvariables);
+    
     
     // Top-level errors from GraphQL (ACCESS_DENIED etc)
     const topLevelErrors = response?.companyCreate?.userErrors;

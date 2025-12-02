@@ -44,6 +44,21 @@ export const loader = async ({ request, params }) => {
       }
     ];
   }
+
+  // --- NEW: fetch presets for this shop ---
+  const presetsRaw = await prisma.preset.findMany({
+    where: { shopId: session.shop },
+    orderBy: [
+      { isDefault: "desc" },
+      { id: "asc" }
+    ],
+  });
+
+  const presets = presetsRaw.map((p) => ({
+    ...p,
+    createdAt: p.createdAt?.toISOString?.() ?? null,
+    updatedAt: p.updatedAt?.toISOString?.() ?? null,
+  }));
   // Get current user information only
   let currentUser = {
     id: "current-user",
@@ -67,6 +82,7 @@ export const loader = async ({ request, params }) => {
     company: serialized,
     currentUser,
     paymentTermsTemplates,
+    presets,
   });
 };
 
@@ -117,10 +133,14 @@ export const action = async ({ request }) => {
         companyLocation: {
           name: companyData.locationName || "Main Location",
           buyerExperienceConfiguration: {
-            checkoutToDraft: companyData.submitAsDrafts,
-            paymentTermsTemplateId: companyData.paymentTerms
+            editableShippingAddress: companyData.allowOneTimeShipAddress,
+            paymentTermsTemplateId: companyData.paymentTerms,
+            checkoutToDraft: !companyData.submitAutomatically, //need to update
+            deposit: companyData.requireDeposit
+                      ? { percentage: parseFloat(companyData.depositPercent)} 
+                      : null, 
           },
-          taxExempt: true,
+          taxExempt: companyData.taxExempt === 'true', //need to update
           shippingAddress: buildAddressInput(finalShippingData),
           ...(billingShippingSame
           ? {
@@ -136,6 +156,9 @@ export const action = async ({ request }) => {
       }
     };
 
+    console.log("variable value is",variables.input.companyLocation.buyerExperienceConfiguration);
+    console.log("variable tax exempt",variables.input.companyLocation.taxExempt);
+    //return "wait for min";
     // Execute the GraphQL mutation
     const response = await admin.graphql(companyCreate, { variables });
     const result = await response.json();
@@ -292,8 +315,11 @@ export default function CompanyApprovalRoute() {
     apiKey,
     company,
     currentUser,
-    paymentTermsTemplates = []
+    paymentTermsTemplates = [],
+    presets = [],   
   } = useLoaderData();
+
+  const defaultPreset = presets.find((p) => p.isDefault) || null;
 
   const navigate = useNavigate();
   const fetcher = useFetcher();
@@ -302,27 +328,79 @@ export default function CompanyApprovalRoute() {
   const isLoading = fetcher.state === 'submitting' || fetcher.state === 'loading';
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
-  const [formData, setFormData] = useState({
-    // Staff assignment
-    //assignedStaff: [],
-    contactRole: "location-admin",
+    const [formData, setFormData] = useState(() => {
+    // base defaults
+    const base = {
+      contactRole: "location-admin",
+      selectedCatalogs: [],
+      paymentTerms: "",
+      requireDeposit: false,
+      depositPercent: "",
+      allowOneTimeShipAddress: true,
+      submitAsDrafts: false,
+      taxExempt: "true",
+      customMessage: "",
+      sendEmail: false,
+    };
 
-    // Catalogs
-    selectedCatalogs: [],
+    if (!defaultPreset) return base;
 
-    // Payment terms - uses template ID
-    paymentTerms: paymentTermsTemplates?.[0]?.id || "no-payment-terms",
-
-    // Checkout
-    skipShippingAddress: false,
-    submitAsDrafts: false,
-
-    customMessage: "",
-    sendEmail: false
+    // apply default preset on first load
+    return {
+      ...base,
+      contactRole: defaultPreset.contactRole || base.contactRole,
+      paymentTerms: defaultPreset.paymentTerms?.gid || base.paymentTerms,
+      requireDeposit: !!defaultPreset.requireDeposit,
+      depositPercent: defaultPreset.requireDeposit || "",
+      allowOneTimeShipAddress:
+        defaultPreset.allowOneTimeShipAddress ?? base.allowOneTimeShipAddress,
+      submitAsDrafts: !defaultPreset.checkoutOrderDraft
+        ? base.submitAsDrafts
+        : base.submitAsDrafts, // adjust to your meaning if needed
+      taxExempt: defaultPreset.taxes ?? base.taxExempt,
+      customMessage: defaultPreset.communication || base.customMessage,
+    };
   });
+
+  const [selectedPresetId, setSelectedPresetId] = useState(
+    defaultPreset ? defaultPreset.id : ""
+  );
+
+  
+
+  const applyPresetToForm = (preset) => {
+    if (!preset) return;
+    setFormData((prev) => ({
+      ...prev,
+
+      // Payment terms JSON: { gid, name }
+      paymentTerms: preset.paymentTerms?.gid || "",
+
+      requireDeposit: !!preset.requireDeposit,
+      depositPercent: preset.requireDeposit || "",
+
+      allowOneTimeShipAddress: preset.allowOneTimeShipAddress ?? prev.allowOneTimeShipAddress,
+                                      
+      // Assuming checkoutorderDraft in Preset stores your "auto submit" flag
+      submitAutomatically: preset.checkoutOrderDraft ?? prev.submitAutomatically,
+
+      taxExempt: preset.taxes ?? prev.taxExempt,
+
+      contactRole: preset.contactRole || prev.contactRole,
+
+      customMessage: preset.communication || prev.customMessage,
+    }));
+  };
+
 
   // Staff search state
   const [staffSearchTerm, setStaffSearchTerm] = useState("");
+  
+  useEffect(() => {
+    if (defaultPreset) {
+      applyPresetToForm(defaultPreset);
+    }
+  }, []); // run once
 
   // Handle action response
   useEffect(() => {
@@ -368,6 +446,8 @@ export default function CompanyApprovalRoute() {
     e.preventDefault();
     setNotification({ show: false, message: '', type: '' });
 
+    console.log("current form data",formData);
+  
     const companyData = {
       companyId: company.id, // Pass the company ID for updating
       companyName: company.name || "",
@@ -442,7 +522,6 @@ export default function CompanyApprovalRoute() {
           {/* Header */}
           <s-grid gridTemplateColumns="1fr auto" alignItems="center">
             <s-stack direction="inline" alignItems="center" gap="small-200">
-              {/* <s-button icon="arrowLeft" variant="primary" onClick={() => navigate(-1)}> */}
               <s-button icon="arrowLeft" variant="primary" onClick={backpage}>
                 <s-icon type="arrow-left" />
               </s-button>
@@ -450,7 +529,30 @@ export default function CompanyApprovalRoute() {
             </s-stack>
 
             <s-stack direction="inline" gap="small-200">
-              <s-button variant="secondary" onClick={() => navigate(`/companies/${company.id}`)}>
+              
+              <s-stack direction="inline" gap="small-100" alignItems="center">
+                <s-select
+                  title="Approval preset"
+                  name="approvalPreset"
+                  value={String(formData.selectedPresetId || "")}
+                  onChange={(e) => {
+                    const id = Number(e.target.value) || null;
+                    setSelectedPresetId(id);
+                    const preset = presets.find((p) => p.id === id);
+                    setFormData((prev) => ({ ...prev, selectedPresetId: id }));
+                    applyPresetToForm(preset);
+                  }}
+                >
+                  {presets.map((p) => (
+                    <s-option key={p.id} value={String(p.id)}>
+                      {p.presetTitle || `Preset #${p.id}`}
+                    </s-option>
+                  ))}
+                </s-select>
+              </s-stack>
+
+
+              <s-button variant="secondary" onClick={() => navigate(`/company/${company.id}`)}>
                 Cancel
               </s-button>
               <s-button
@@ -458,7 +560,7 @@ export default function CompanyApprovalRoute() {
                 onClick={handleSubmit}
                 disabled={isLoading}
               >
-                {isLoading ? "Creating Company..." : "Save and Continue"}
+                {isLoading ? "Creating Company..." : "Approve"}
               </s-button>
             </s-stack>
           </s-grid>
@@ -471,53 +573,6 @@ export default function CompanyApprovalRoute() {
           <s-grid gridTemplateColumns="2fr 1fr" gap="base">
             {/* Left column - Main configuration */}
             <s-stack gap="base">
-              {/* Assigned Staff */}
-              {/* <s-box padding="base" border="base" borderRadius="base" background="base">
-              <s-stack direction="block" gap="base">
-                <s-heading accessibilityRole="heading">Assigned staff</s-heading>
-                <s-text>Choose up to 10 sales staff for this location</s-text>
-                
-                <s-text-field
-                  label="Search staff"
-                  placeholder="Search staff members..."
-                  labelAccessibilityVisibility="exclusive"
-                  value={staffSearchTerm}
-                  onInput={(e) => setStaffSearchTerm(e.target.value)}
-                />
-                
-                <s-checkbox
-                  checked={formData.assignedStaff.length > 0}
-                  onChange={(e) => handleInputChange('assignedStaff', e.target.checked ? ['default-staff'] : [])}
-                >
-                  Learn more about assigning sales staff
-                </s-checkbox>
-              </s-stack>
-            </s-box> */}
-
-              {/* Catalogs */}
-              {/* <s-box padding="base" border="base" borderRadius="base" background="base">
-              <s-stack direction="block" gap="base">
-                <s-heading accessibilityRole="heading">Catalogs</s-heading>
-                
-                <s-text tone="subdued">
-                  Your store does not have any Company Location (B2B) catalogs. To assign specific catalogs to this company, you will need to create some in Shopify.
-                </s-text>
-                
-                <s-button variant="secondary">Manage catalogs</s-button>
-                
-                <s-text-field
-                  label="Search catalogs"
-                  placeholder="Search catalogs..."
-                  labelAccessibilityVisibility="exclusive"
-                  disabled
-                />
-                
-                <s-text tone="subdued" size="small">
-                  You can assign up to 250 Company Location (B2B) catalogs.
-                </s-text>
-              </s-stack>
-            </s-box> */}
-
               {/* Payment Terms - Dynamic from GraphQL */}
               <s-box padding="base" border="base" borderRadius="base" background="base">
                 <s-stack direction="block" gap="base">
@@ -529,6 +584,7 @@ export default function CompanyApprovalRoute() {
                       value={formData.paymentTerms}
                       onChange={(e) => handleInputChange('paymentTerms', e.target.value)}
                     >
+                      <s-option value="">No payment terms</s-option>
                       {/* Dynamic payment terms from API */}
                       {paymentTermsTemplates.map((term) => (
                         <s-option key={term.id} value={term.id}>
@@ -553,26 +609,65 @@ export default function CompanyApprovalRoute() {
                       </s-choice>
                     </s-choice-list>
                   )}
+
+                  {formData.paymentTerms && formData.paymentTerms !== "No payment terms" && (
+                    <s-checkbox
+                      checked={formData.requireDeposit}
+                      onChange={(e) => handleInputChange("requireDeposit", e.target.checked)}
+                      label="Require deposit on orders created at checkout"
+                    />
+                    )}
+
+                    {/* Deposit percent field, visible only when checkbox is checked */}
+                    {formData.requireDeposit && (
+                      <s-text-field
+                        type="number"
+                        min="0"
+                        max="100"
+                        placeholder="%"
+                        value={formData.depositPercent}
+                        onInput={(e) => handleInputChange("depositPercent", e.target.value)}
+                      />
+                    )}
                 </s-stack>
               </s-box>
 
-              {/* Checkout */}
               <s-box padding="base" border="base" borderRadius="base" background="base">
                 <s-stack direction="block" gap="base">
                   <s-heading accessibilityRole="heading">Checkout</s-heading>
 
-                  <s-heading accessibilityRole="heading" size="small">Order submission</s-heading>
-                  <s-text tone="subdued" size="small">
-                    Orders without a shipping addresses will be submitted as draft orders
-                  </s-text>
+                  <s-text>Ship to address</s-text>
+                  <s-checkbox  checked={formData.allowOneTimeShipAddress}
+                    onChange={(e) => handleInputChange('allowOneTimeShipAddress', e.target.checked)}
+                    label="Allow customers to ship to any one-time address"/>
 
-                  <s-checkbox
-                    checked={formData.submitAsDrafts}
-                    onChange={(e) => handleInputChange('submitAsDrafts', e.target.checked)}
-                    label="Submit all orders as drafts for review"
-                  />
+                  {/* <s-text>Order submission</s-text> */}
+                  <s-choice-list
+                    label="Order submission"
+                    name="submitAutomatically"
+                    values={[formData.submitAutomatically ? "auto" : "draft"]}
+                    //value={formData.submitAutomatically}
+                    onChange={(e) => {
+                      const values = e.currentTarget.values || [];
+                      const selected = Array.isArray(values) ? values[0] : values;
+                      handleInputChange("submitAutomatically", selected === "auto");
+                    }}
+                  >
+                    <s-choice value="auto">
+                      Automatically submit orders
+                      <s-text slot="details">
+                        Orders without shipping addresses will be submitted as draft orders
+                      </s-text>
+                    </s-choice>
+                    
+                    <s-choice value="draft">
+                      Submit all orders as drafts for review
+                    </s-choice>
+                  </s-choice-list>
+
                 </s-stack>
               </s-box>
+
 
               {/* Taxes */}
               <s-box padding="base" border="base" borderRadius="base" background="base">
@@ -582,8 +677,8 @@ export default function CompanyApprovalRoute() {
                   <s-select label="Date range" name="taxExempt"
                     value={formData.taxExempt}
                     onChange={(e) => handleInputChange('taxExempt', e.target.value)}>
-                    <s-option value="true">Collect Tax</s-option>
-                    <s-option value="false">Don't collect Tax</s-option>
+                    <s-option value="false">Collect Tax</s-option>
+                    <s-option value="true">Don't collect Tax</s-option>
                   </s-select>
                 </s-stack>
               </s-box>
@@ -594,7 +689,7 @@ export default function CompanyApprovalRoute() {
                   <s-choice-list
                     name="contactRole"
                     details=""
-                    value={formData.contactRole}
+                    values={[formData.contactRole]}
                     onChange={(e) => {
                       const selected = Array.isArray(e.currentTarget?.values)
                         ? e.currentTarget.values[0]
@@ -651,6 +746,7 @@ export default function CompanyApprovalRoute() {
     </AppProvider>
   );
 }
+
 export const headers = (headersArgs) => {
   return boundary.headers(headersArgs);
 };

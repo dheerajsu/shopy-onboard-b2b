@@ -1,242 +1,147 @@
-import { useEffect } from "react";
-import { useFetcher } from "react-router";
-import { useAppBridge } from "@shopify/app-bridge-react";
-import { boundary } from "@shopify/shopify-app-react-router/server";
-import { authenticate } from "../shopify.server";
+// app._index.jsx
 
+import {useEffect} from "react";
+import prisma from "../db.server";
+import {useLoaderData, useFetcher, useNavigate} from "react-router";
+import {useAppBridge} from "@shopify/app-bridge-react";
+import {boundary} from "@shopify/shopify-app-react-router/server";
+import {authenticate} from "../shopify.server";
+
+// Protect the route (adjust if your template already has a loader)
 export const loader = async ({ request }) => {
-  await authenticate.admin(request);
-
-  return null;
-};
-
-export const action = async ({ request }) => {
-  const { admin } = await authenticate.admin(request);
-  const color = ["Red", "Orange", "Yellow", "Green"][
-    Math.floor(Math.random() * 4)
-  ];
-  const response = await admin.graphql(
-    `#graphql
-      mutation populateProduct($product: ProductCreateInput!) {
-        productCreate(product: $product) {
-          product {
-            id
-            title
-            handle
-            status
-            variants(first: 10) {
-              edges {
-                node {
-                  id
-                  price
-                  barcode
-                  createdAt
-                }
-              }
-            }
-          }
-        }
-      }`,
-    {
-      variables: {
-        product: {
-          title: `${color} Snowboard`,
-        },
-      },
+ const { session } = await authenticate.admin(request);
+  const shop = session.shop;
+  // Build base where clause
+  //let where = { shopId: shop };
+  const pendingCount = await prisma.company.count({
+    where: {
+      shopId: shop,
+      companyStatus: "open", // pending
     },
-  );
-  const responseJson = await response.json();
-  const product = responseJson.data.productCreate.product;
-  const variantId = product.variants.edges[0].node.id;
-  const variantResponse = await admin.graphql(
-    `#graphql
-    mutation shopifyReactRouterTemplateUpdateVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
-      productVariantsBulkUpdate(productId: $productId, variants: $variants) {
-        productVariants {
-          id
-          price
-          barcode
-          createdAt
-        }
-      }
-    }`,
-    {
-      variables: {
-        productId: product.id,
-        variants: [{ id: variantId, price: "100.00" }],
-      },
-    },
-  );
-  const variantResponseJson = await variantResponse.json();
-
-  return {
-    product: responseJson.data.productCreate.product,
-    variant: variantResponseJson.data.productVariantsBulkUpdate.productVariants,
-  };
+  });
+  
+  return Response.json({ pendingCount });
 };
 
 export default function Index() {
+  const { pendingCount } = useLoaderData();
+  const navigate = useNavigate();
+  const app = useAppBridge();
   const fetcher = useFetcher();
-  const shopify = useAppBridge();
-  const isLoading =
-    ["loading", "submitting"].includes(fetcher.state) &&
-    fetcher.formMethod === "POST";
 
   useEffect(() => {
-    if (fetcher.data?.product?.id) {
-      shopify.toast.show("Product created");
-    }
-  }, [fetcher.data?.product?.id, shopify]);
-  const generateProduct = () => fetcher.submit({}, { method: "POST" });
+    // you can hook app bridge, analytics, etc. here
+  }, [app]);
+
+  const handleReviewClick = () => {
+     navigate(`/app/companies?status=open&page=1`);
+  };
 
   return (
-    <s-page heading="Shopify app template">
-      <s-button slot="primary-action" onClick={generateProduct}>
-        Generate a product
-      </s-button>
-
-      <s-section heading="Congrats on creating a new Shopify app 🎉">
-        <s-paragraph>
-          This embedded app template uses{" "}
-          <s-link
-            href="https://shopify.dev/docs/apps/tools/app-bridge"
-            target="_blank"
-          >
-            App Bridge
-          </s-link>{" "}
-          interface examples like an{" "}
-          <s-link href="/app/additional">additional page in the app nav</s-link>
-          , as well as an{" "}
-          <s-link
-            href="https://shopify.dev/docs/api/admin-graphql"
-            target="_blank"
-          >
-            Admin GraphQL
-          </s-link>{" "}
-          mutation demo, to provide a starting point for app development.
-        </s-paragraph>
-      </s-section>
-      <s-section heading="Get started with products">
-        <s-paragraph>
-          Generate a product with GraphQL and get the JSON output for that
-          product. Learn more about the{" "}
-          <s-link
-            href="https://shopify.dev/docs/api/admin-graphql/latest/mutations/productCreate"
-            target="_blank"
-          >
-            productCreate
-          </s-link>{" "}
-          mutation in our API references.
-        </s-paragraph>
-        <s-stack direction="inline" gap="base">
-          <s-button
-            onClick={generateProduct}
-            {...(isLoading ? { loading: true } : {})}
-          >
-            Generate a product
-          </s-button>
-          {fetcher.data?.product && (
-            <s-button
-              onClick={() => {
-                shopify.intents.invoke?.("edit:shopify/Product", {
-                  value: fetcher.data?.product?.id,
-                });
-              }}
-              target="_blank"
-              variant="tertiary"
-            >
-              Edit product
-            </s-button>
-          )}
+    <s-page inlineSize="base" heading="Shopy B2B Solutions" >
+      {/* SETUP ESSENTIALS CARD */}
+      <s-section heading="Setup essentials">
+        <s-stack gap="base">
+          <s-divider/>
+          <SetupRow
+            label="Customize the application form"
+            actionLabel="View form editor"
+            href="javascript:void(0)"
+          />
+          <s-divider/>
+          <SetupRow
+            label="Review approval preset"
+            actionLabel="Manage preset"
+            href="/app/approval_presets"
+          />
+          <s-divider/>
+          <SetupRow
+            label="Activate app extensions"
+            actionLabel="Manage installation"
+            href="/app/extensions"
+          />
+          <s-divider/>
+          <SetupRow
+            label="Configure email notifications"
+            actionLabel="Manage notifications"
+            href="/app/notifications"
+          />
+          <s-divider/>
         </s-stack>
-        {fetcher.data?.product && (
-          <s-section heading="productCreate mutation">
-            <s-stack direction="block" gap="base">
-              <s-box
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-              >
-                <pre style={{ margin: 0 }}>
-                  <code>{JSON.stringify(fetcher.data.product, null, 2)}</code>
-                </pre>
-              </s-box>
+        
+      </s-section>
 
-              <s-heading>productVariantsBulkUpdate mutation</s-heading>
-              <s-box
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-              >
-                <pre style={{ margin: 0 }}>
-                  <code>{JSON.stringify(fetcher.data.variant, null, 2)}</code>
-                </pre>
-              </s-box>
+      {/* WELCOME + INNER CARDS */}
+      <s-section heading="Welcome" borderRadius="base">
+        <s-grid gridTemplateColumns="1fr 1fr" gap="base">
+          {/* Pending applications */}
+          <s-box heading="Pending applications" borderRadius="base"
+  borderWidth="base"
+  padding="base">
+            <s-stack gap="base large">
+              <s-stack direction="inline" gap="base">
+                <s-icon type="profile" size="base" />
+                <s-heading>Pending applications</s-heading>
+              </s-stack>
+              <s-heading>{pendingCount}</s-heading>
+              <s-button disabled={pendingCount === 0}
+                onClick={handleReviewClick}
+              >Review applications</s-button>
             </s-stack>
-          </s-section>
-        )}
+          </s-box>
+
+          {/* Company import */}
+          <s-box heading="Company import" borderRadius="base"
+  borderWidth="base"
+  padding="base">
+            <s-paragraph>
+              Use the app to bulk create or update companies, locations, and
+              contacts.
+            </s-paragraph>
+            <s-button variant="secondary">View import tool</s-button>
+          </s-box>
+        </s-grid>
       </s-section>
 
-      <s-section slot="aside" heading="App template specs">
-        <s-paragraph>
-          <s-text>Framework: </s-text>
-          <s-link href="https://reactrouter.com/" target="_blank">
-            React Router
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>Interface: </s-text>
-          <s-link
-            href="https://shopify.dev/docs/api/app-home/using-polaris-components"
-            target="_blank"
-          >
-            Polaris web components
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>API: </s-text>
-          <s-link
-            href="https://shopify.dev/docs/api/admin-graphql"
-            target="_blank"
-          >
-            GraphQL
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>Database: </s-text>
-          <s-link href="https://www.prisma.io/" target="_blank">
-            Prisma
-          </s-link>
-        </s-paragraph>
-      </s-section>
+      {/* EXTENSION STATUS CARD */}
+      <s-section heading="Extension status">
+        <s-stack gap="base">
+          <s-stack direction="inline" gap="small-200" alignItems="center">
+            <s-icon type="lock" />
+            <s-text>Storefront lock</s-text>
+            <s-badge tone="info" color="subdued">
+              Not live
+            </s-badge>
+          </s-stack>
 
-      <s-section slot="aside" heading="Next steps">
-        <s-unordered-list>
-          <s-list-item>
-            Build an{" "}
-            <s-link
-              href="https://shopify.dev/docs/apps/getting-started/build-app-example"
-              target="_blank"
-            >
-              example app
-            </s-link>
-          </s-list-item>
-          <s-list-item>
-            Explore Shopify&apos;s API with{" "}
-            <s-link
-              href="https://shopify.dev/docs/apps/tools/graphiql-admin-api"
-              target="_blank"
-            >
-              GraphiQL
-            </s-link>
-          </s-list-item>
-        </s-unordered-list>
+          <s-button variant="secondary">View installation settings</s-button>
+        </s-stack>
       </s-section>
     </s-page>
   );
 }
+
+/**
+ * Single checklist row used in "Setup essentials"
+ */
+function SetupRow({label, actionLabel, href }) {
+  return (
+    <s-stack
+      direction="inline"
+      gap="base"
+      alignItems="center"
+      justifyContent="space-between"
+    >
+      <s-stack direction="inline" gap="small-200" alignItems="center">
+        <s-icon type="check-circle-filled" tone="success" />
+        <s-text>{label}</s-text>
+      </s-stack>
+
+      <s-link href={href}>{actionLabel}</s-link>
+    </s-stack>
+  );
+}
+
 
 export const headers = (headersArgs) => {
   return boundary.headers(headersArgs);

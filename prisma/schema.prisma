@@ -130,3 +130,21 @@ model Setting {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+model Preset {
+  id                      Int      @id @default(autoincrement())
+  shopId                  String?
+  presetTitle             String?  
+  paymentTerms            Json?
+  requireDeposit          String?
+  checkoutOrderDraft      Boolean  @default(true)
+  allowOneTimeShipAddress Boolean  @default(false)
+  taxes                   String?
+  contactRole             String?
+  communication           String?
+  
+  isDefault               Boolean  @default(false)
+
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
