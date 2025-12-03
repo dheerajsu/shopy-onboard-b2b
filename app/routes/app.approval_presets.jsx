@@ -9,7 +9,7 @@ import {
 import { useState, useMemo, useEffect } from "react";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
-import { ensureDefaultPreset } from "./defaultPreset.server.js"
+import { ensureDefaultPreset } from "../defaultPreset.server.js"
 
 // ---------- LOADER ----------
 export const loader = async ({ request }) => {

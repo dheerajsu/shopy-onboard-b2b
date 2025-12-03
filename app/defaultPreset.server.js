@@ -1,4 +1,4 @@
-import prisma from "../db.server";
+import prisma from "./db.server";
 
 export async function ensureDefaultPreset(shopId) {
   const existing = await prisma.preset.findFirst({
