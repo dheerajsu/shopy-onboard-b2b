@@ -17,7 +17,7 @@ export async function loader({ request }) {
 
     const url = new URL(request.url);
     const countryCode = url.searchParams.get('countryCode');
-    console.log("get country code",countryCode);
+    //console.log("get country code",countryCode);
     if (countryCode) {
       // Get states for a specific country
       const country = await prisma.country.findFirst({

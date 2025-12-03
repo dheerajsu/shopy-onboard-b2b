@@ -477,7 +477,7 @@ class CompanyForm {
       // Get form data
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
-      console.log("all data is",data);
+      //console.log("all data is",data);
       
       // Add metadata
       data.timestamp = new Date().toISOString();
@@ -485,7 +485,7 @@ class CompanyForm {
       data.block_id = this.options.blockId;
       data.same_as_shipping = this.sameAsShipping;
 
-      console.log('Submitting data:', data);
+      //console.log('Submitting data:', data);
       
       // If same as shipping is checked, ensure billing fields are populated from shipping
       if (this.sameAsShipping) {
@@ -494,7 +494,7 @@ class CompanyForm {
 
       // Construct the full URL
       const finalEndpoint = `${this.endpointBaseUrl}/${this.options.apiEndpoint}`;
-      console.log("Final endpoint:", finalEndpoint);
+      //console.log("Final endpoint:", finalEndpoint);
       
       const response = await fetch(finalEndpoint, {
         method: 'POST',
@@ -504,12 +504,12 @@ class CompanyForm {
         body: JSON.stringify(data)
       });
 
-      console.log('Response status:', response.status);
+      //console.log('Response status:', response.status);
       
       const result = await response.json();
       
       if (response.ok) {
-        console.log('Success response:', result);
+        //console.log('Success response:', result);
         this.showSuccess(result.submissionId);
       } else {
         // Handle specific error cases

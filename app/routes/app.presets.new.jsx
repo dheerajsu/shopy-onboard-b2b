@@ -189,7 +189,7 @@ export default function CompanyPresetRoute() {
       : null,
     };
 
-    console.log("get all data",companyData);
+    //console.log("get all data",companyData);
     if(!formData.presetTitle){
       setNotification({
         show: true,

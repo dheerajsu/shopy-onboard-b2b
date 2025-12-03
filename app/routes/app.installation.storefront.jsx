@@ -19,7 +19,7 @@ export const loader = async ({ request }) => {
         console.error("Failed to fetch themes:", error);
     }
 
-    console.log("all themes are",themes);
+    //console.log("all themes are",themes);
   // Optionally fetch current checkout rule state from Shopify GraphQL or DB
   // const rule = await fetchCheckoutRule(admin);
 

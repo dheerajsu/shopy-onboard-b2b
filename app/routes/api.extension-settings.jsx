@@ -30,7 +30,7 @@ export const loader = async ({ request }) => {
   }
 
   const shopApiKey = session.appapikey || "";
-  console.log("what is shopapikey",shopApiKey);
+  //console.log("what is shopapikey",shopApiKey);
 
   // Allow either the shop-specific key or a global master key in env (backwards compatibility)
   if (!(apiKey === shopApiKey)) {

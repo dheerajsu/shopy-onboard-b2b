@@ -156,8 +156,8 @@ export const action = async ({ request }) => {
       }
     };
 
-    console.log("variable value is",variables.input.companyLocation.buyerExperienceConfiguration);
-    console.log("variable tax exempt",variables.input.companyLocation.taxExempt);
+    //console.log("variable value is",variables.input.companyLocation.buyerExperienceConfiguration);
+    //console.log("variable tax exempt",variables.input.companyLocation.taxExempt);
     //return "wait for min";
     // Execute the GraphQL mutation
     const response = await admin.graphql(companyCreate, { variables });
@@ -446,7 +446,7 @@ export default function CompanyApprovalRoute() {
     e.preventDefault();
     setNotification({ show: false, message: '', type: '' });
 
-    console.log("current form data",formData);
+    //console.log("current form data",formData);
   
     const companyData = {
       companyId: company.id, // Pass the company ID for updating

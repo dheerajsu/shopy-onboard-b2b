@@ -149,7 +149,7 @@ export default function CreateLocation({ onCreated = () => { } }) {
   };
 
   const handleCreate = async () => {
-    console.log("location name is--",locationName);
+    //console.log("location name is--",locationName);
     setLoading(true);
     setMessage("");
     setError("");
@@ -247,9 +247,9 @@ export default function CreateLocation({ onCreated = () => { } }) {
       }
 
       if (result?.success) {
-        console.log("created result is--", result);
+        //console.log("created result is--", result);
         const created = result?.companyLocation ?? result?.data ?? null;
-        console.log("created data new is--", created);
+        //console.log("created data new is--", created);
         try {
           if (created) {
             // @ts-ignore

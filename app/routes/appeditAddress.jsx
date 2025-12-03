@@ -483,7 +483,7 @@ export async function action({ request }) {
   
   const form = await request.formData();
   const companyData = JSON.parse(form.get('companyform') || '{}');
-  console.log("all Data", companyData);
+  //console.log("all Data", companyData);
   
   const customerPhone = companyData.customer_phone;
   const id = companyData.companyId || companyData.savedvalues.id;
@@ -520,7 +520,7 @@ export async function action({ request }) {
     };
   }
 
-  console.log("shipping billing", shipping);
+  //console.log("shipping billing", shipping);
 
   try {
     if (company_table_mailid !== customeremailid) {

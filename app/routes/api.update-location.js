@@ -43,7 +43,7 @@ export const action = async ({ request }) => {
 
   //const input = body.input ?? body.payload?.input ?? body.payload ?? {};
   const payload = body.payload ?? {};
-  console.log("payload is",payload);
+  //console.log("payload is",payload);
   
   const { maincompanyLocationId, locationName } = payload;
   const buyerlocationis = payload.input.buyerExperienceConfiguration;
@@ -139,7 +139,7 @@ export const action = async ({ request }) => {
     //return jsonResponse({ success: true, companyLocation: payload.companyLocation });
   }
   catch (err) {
-    console.log("Error creating company:", err);
+    //console.log("Error creating company:", err);
     return Response.json({ success: false, message: "Server error" }, { status: 500, headers: CORS });
   }
 };

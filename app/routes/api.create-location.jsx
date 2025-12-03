@@ -168,7 +168,7 @@ export const action = async ({ request }) => {
     }
   }
   catch (err) {
-    console.log("Error creating company:", err);
+    //console.log("Error creating company:", err);
     return Response.json({ success: false, message: "Server error" }, { status: 500, headers: CORS });
   }
 };

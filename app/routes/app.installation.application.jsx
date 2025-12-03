@@ -86,7 +86,7 @@ export default function ApplicationTab() {
     try {
       await navigator.clipboard.writeText(value);
       // Optional: show toast to user
-      console.log("Copied:", value);
+      //console.log("Copied:", value);
     } catch (err) {
       console.error("Failed to copy", err);
     }

@@ -98,7 +98,7 @@ export default function EditPresetPage() {
   // Track loading state based on fetcher
   const isLoading = fetcher.state === 'submitting' || fetcher.state === 'loading';
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
-  console.log("default value is",preset.checkoutOrderDraft);
+  //console.log("default value is",preset.checkoutOrderDraft);
   const [formData, setFormData] = useState({
     isDefault: preset.isDefault,
     // Staff assignment
@@ -303,7 +303,6 @@ export default function EditPresetPage() {
             {/* Left column - Main configuration */}
             <s-stack gap="base">
                 {/* Preset title  */}
-                {console.log("iddefault value is",formData.isDefault)}
                 {!formData.isDefault && (
                     <s-box padding="base" border="base" borderRadius="base" background="base">
                         <s-stack direction="block" gap="base">

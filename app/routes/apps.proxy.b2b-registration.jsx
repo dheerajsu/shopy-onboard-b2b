@@ -46,7 +46,7 @@ export const loader = async ({ request }) => {
     const contact = await prisma.companycontact.findUnique({
       where: { baseCustomerId: customerGid },
     });
-    console.log("value found of not",contact);
+    //console.log("value found of not",contact);
     if (contact) {
       const company = await prisma.company.findFirst({
         where: { customerId: contact.id },
@@ -69,7 +69,7 @@ export const loader = async ({ request }) => {
     // 2️⃣ If not found locally, check Shopify (optional fallback)
     const variables = { customerId: customerGid };
     const resp = await graphQLRequest(ctx, companyQuery, variables);
-    console.log("what is the response",resp);
+    //console.log("what is the response",resp);
     const shopifyCompany = resp?.customer?.companyContactProfiles?.[0]?.company ?? null;
 
     if (shopifyCompany) {
@@ -120,7 +120,7 @@ export const action = async ({ request }) => {
   const shipbillprovince = body.shipbillprovince ?? body.payload?.shipbillprovince ?? {};
   //console.log("final input is",body.shipbillprovince);
   //final input is { shippingprovince: { province: 'AP' }, billingSameAsShipping: true }
-  console.log("province value",shipbillprovince?.shippingprovince?.province);
+  //console.log("province value",shipbillprovince?.shippingprovince?.province);
 
   //Get token and shop domain
   const { ctx, staticcompanyid, shopId } = await getCtxValue(request);
@@ -217,9 +217,9 @@ export const action = async ({ request }) => {
       const preset = presetsRaw[0];
       const variables = { input };
       const getclientvalues = variables.input;
-      console.log("preset values",presetsRaw);
-      console.log("variables are",variables);
-      console.log("variables shipping billing info",getclientvalues.companyLocation.shippingAddress);
+      // console.log("preset values",presetsRaw);
+      // console.log("variables are",variables);
+      // console.log("variables shipping billing info",getclientvalues.companyLocation.shippingAddress);
       // console.log("company name is",getclientvalues.company.name);
       // console.log("preset table",preset.paymentTerms);
       
@@ -227,7 +227,7 @@ export const action = async ({ request }) => {
       const billingSameFromClient = getclientvalues.companyLocation.billingSameAsShipping;
       const billingFromClient = getclientvalues.companyLocation.billingAddress;
       
-      console.log(`shipping address ${shippingFromClient}, billing same or not ${billingSameFromClient}, billing address ${billingFromClient}`)
+      //console.log(`shipping address ${shippingFromClient}, billing same or not ${billingSameFromClient}, billing address ${billingFromClient}`)
 
       const newvariable = {
         company: {
@@ -264,7 +264,7 @@ export const action = async ({ request }) => {
           },
       };
 
-      console.log("final variable is",newvariable);
+      //console.log("final variable is",newvariable);
       //return "ignore for now";
     
     //console.log("all variables ",variables);
@@ -274,7 +274,7 @@ export const action = async ({ request }) => {
     
     // Top-level errors from GraphQL (ACCESS_DENIED etc)
     const topLevelErrors = response?.companyCreate?.userErrors;
-    console.log("final response is",topLevelErrors);
+    //console.log("final response is",topLevelErrors);
     // handle user errors
     const userErrors = response?.companyCreate?.userErrors ?? [];
 
@@ -430,7 +430,7 @@ export const action = async ({ request }) => {
     return Response.json({ success: false, message: errorMessage, raw: data }, { status: 400, headers: CORS });
 
   } catch (err) {
-    console.log("Error creating company:", err);
+    //console.log("Error creating company:", err);
     return Response.json({ success: false, message: "Server error" }, { status: 500, headers: CORS });
   }
 };

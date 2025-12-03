@@ -57,7 +57,7 @@ export const loader = async ({ request }) => {
   if (!shopId) {
     return jsonResponse({ success: false, message: "Missing shopId" }, 400);
   }
-  console.log("id is",baseCustomerId);
+  //console.log("id is",baseCustomerId);
   if (!baseCustomerId) {
     return jsonResponse({ success: false, message: "Missing baseCustomerId" }, 400);
   }

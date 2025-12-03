@@ -39,7 +39,7 @@ async function checkShopifyCustomerExists(shop_domain, customer_email) {
     
     const response = await graphQLRequest(ctx, get_customer_exist, variables);
 
-    console.log("response is visible",response);
+    //console.log("response is visible",response);
 
     if (response.customerByIdentifier == null) {
       return false;
@@ -58,19 +58,19 @@ export async function action({ request }) {
   
   // Handle preflight OPTIONS request
   if (request.method === "OPTIONS") {
-    console.log("Handling OPTIONS preflight request");
+    //console.log("Handling OPTIONS preflight request");
     return new Response(null, { status: 200, headers: CORS_HEADERS });
   }
 
   if (request.method !== "POST") {
-    console.log("Method not allowed:", request.method);
+    //console.log("Method not allowed:", request.method);
     return new Response(null, { status: 405, headers: CORS_HEADERS });
   }
 
   try {
     // Parse the request body
     const body = await request.json();
-    console.log('Request body:', body);
+    //console.log('Request body:', body);
 
     const {
       // Customer Information
@@ -229,10 +229,10 @@ export async function action({ request }) {
       });
 
       const finalexistornot = await checkShopifyCustomerExists(shop_domain, customer_email);
-      console.log("customer exist or not",finalexistornot);
+      //console.log("customer exist or not",finalexistornot);
 
       if (existingSubmission || finalexistornot === true) {
-        console.log('Email already exists for this store:', customer_email, shop_domain);
+        //console.log('Email already exists for this store:', customer_email, shop_domain);
         return Response.json(
           { 
             success: false,
@@ -249,7 +249,7 @@ export async function action({ request }) {
     // Generate a unique submission ID
     const submissionId = `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    console.log('Creating submission with ID:', submissionId, 'for shop:', shop_domain);
+    //console.log('Creating submission with ID:', submissionId, 'for shop:', shop_domain);
 
     // Prepare structured address data
     const shippingAddress = {
