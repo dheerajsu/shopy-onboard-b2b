@@ -58,7 +58,7 @@ export default function Index() {
           <SetupRow
             label="Activate app extensions"
             actionLabel="Manage installation"
-            href="/app/extensions"
+            href="/app/installation"
           />
           <s-divider/>
           <SetupRow

@@ -632,6 +632,24 @@ export default function CompanyApprovalRoute() {
                 </s-stack>
               </s-box>
 
+              {/* Checkout */}
+              {/* <s-box padding="base" border="base" borderRadius="base" background="base">
+                <s-stack direction="block" gap="base">
+                  <s-heading accessibilityRole="heading">Checkout</s-heading>
+
+                  <s-heading accessibilityRole="heading" size="small">Order submission</s-heading>
+                  <s-text tone="subdued" size="small">
+                    Orders without a shipping addresses will be submitted as draft orders
+                  </s-text>
+
+                  <s-checkbox
+                    checked={formData.submitAsDrafts}
+                    onChange={(e) => handleInputChange('submitAsDrafts', e.target.checked)}
+                    label="Submit all orders as drafts for review"
+                  />
+                </s-stack>
+              </s-box> */}
+              {/* Checkout */}
               <s-box padding="base" border="base" borderRadius="base" background="base">
                 <s-stack direction="block" gap="base">
                   <s-heading accessibilityRole="heading">Checkout</s-heading>

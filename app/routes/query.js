@@ -624,3 +624,48 @@ mutation customerCreate($input: CustomerInput!) {
   }
 }
 `;
+
+export const checkoutProfiles =`
+  query checkoutProfiles {
+  checkoutProfiles(first: 50) {
+    edges {
+      node {
+        id
+        name
+        isPublished
+      }
+    }
+  }
+}`;
+
+export const customerAccountPagesQuery = `
+  query CustomerAccountPages {
+    shop {
+      id
+    }
+    customerAccountPages(first: 50) {
+      nodes {
+        id
+        title
+        handle
+        ... on CustomerAccountAppExtensionPage {
+          appExtensionUuid
+        }
+      }
+    }
+  }
+`;
+
+export const queryGetAllThemes = 
+`query MyQuery2 {
+  themes(first: 20) {
+    nodes {
+      id
+      name
+      processing
+      role
+      themeStoreId
+      prefix
+    }
+  }
+}`;

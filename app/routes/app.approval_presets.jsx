@@ -1,5 +1,3 @@
-// app.approval_presets.jsx
-
 import prisma from "../db.server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import {
