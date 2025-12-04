@@ -36,7 +36,10 @@ export const loader = async ({ request }) => {
     where,
     skip,
     take,
-    orderBy: { [sortKey]: sortOrder === "asc" ? "asc" : "desc" },
+    orderBy: [
+      {isDefault : "desc"},
+      { [sortKey]: sortOrder === "asc" ? "asc" : "desc" }
+    ],
   });
 
   const serialized = prestes.map((c) => ({
