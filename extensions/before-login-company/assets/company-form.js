@@ -194,6 +194,11 @@ class CompanyForm {
   }
 
   renderField(name, label, type = 'text', required = false, additionalClass = '') {
+    // Special handling for phone fields
+    if (name.endsWith('_phone')) {
+      return this.renderPhoneField(name, label, required, additionalClass);
+    }
+
     const classNames = `form-group ${additionalClass}`;
     return `
       <div class="${classNames}">
@@ -210,6 +215,34 @@ class CompanyForm {
       </div>
     `;
   }
+
+  renderPhoneField(name, label, required = false, additionalClass = '') {
+    const classNames = `form-group ${additionalClass}`;
+    return `
+      <div class="${classNames}">
+        <label class="form-label">
+          ${label} ${required ? '<span class="required">*</span>' : ''}
+        </label>
+        <div class="phone-input-wrapper">
+          <select
+            class="form-select phone-country-select"
+            data-phone-country-select="true"
+            data-phone-for="${name}"
+          >
+            <option value="">Country</option>
+          </select>
+          <input
+            type="tel"
+            name="${name}"
+            class="form-input phone-number-input"
+            ${required ? 'required' : ''}
+            placeholder="Phone number"
+          />
+        </div>
+      </div>
+    `;
+  }
+
 
   async loadAllCountriesFromAsset() {
     if (this._countriesCache) return this._countriesCache;
@@ -267,6 +300,26 @@ class CompanyForm {
       // restore previously-selected if still present
       if (currentValue) select.value = currentValue;
     });
+
+    // ✅ phone country selects
+    const phoneCountrySelects = this.container.querySelectorAll('[data-phone-country-select="true"]');
+    phoneCountrySelects.forEach(select => {
+      const current = select.value || '';
+      select.innerHTML = '<option value="">Country</option>';
+
+      this._countriesCache.forEach(country => {
+        const option = document.createElement('option');
+        option.value = country.code || country.iso_code || country.name;
+        option.textContent = `${country.name} ${country.phoneCode ? `(${country.phoneCode})` : ''}`;
+        if (country.phoneCode) {
+          option.dataset.phoneCode = country.phoneCode; // "+1", "+91", etc.
+        }
+        select.appendChild(option);
+      });
+
+      if (current) select.value = current;
+    });
+
   }
 
   async loadProvinces(countryCode, provinceSelect) {
@@ -347,7 +400,7 @@ class CompanyForm {
     const form = this.container.querySelector('form');
     const submitBtn = this.container.querySelector(`#submit-btn-${this.options.blockId}`);
     const sameAsShippingCheckbox = this.container.querySelector(`#same-as-shipping-${this.options.blockId}`);
-    
+
     if (form) {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -369,18 +422,42 @@ class CompanyForm {
         const countryCode = e.target.value;
         const addressType = e.target.getAttribute('data-address-type');
         const provinceSelect = this.container.querySelector(`[data-province-select="true"][data-address-type="${addressType}"]`);
-        
+
         if (provinceSelect) {
           this.loadProvinces(countryCode, provinceSelect);
         }
       });
     });
+
+    // phonecountry selection
+    const phoneCountrySelects = this.container.querySelectorAll('[data-phone-country-select="true"]');
+    phoneCountrySelects.forEach(select => {
+      select.addEventListener('change', (e) => {
+        const phoneFieldName = select.getAttribute('data-phone-for');
+        const phoneInput = this.container.querySelector(
+          `.phone-number-input[name="${phoneFieldName}"]`
+        );
+        if (!phoneInput) return;
+
+        const opt = select.options[select.selectedIndex];
+        const code = opt && opt.dataset.phoneCode ? opt.dataset.phoneCode : '';
+
+        if (!code) return;
+
+        // Strip any existing leading +code from the start
+        const rest = phoneInput.value.replace(/^\+[\d\s()-]*/, '').trim();
+
+        // Set value as "<code> rest"
+        phoneInput.value = `${code} ${rest}`.trim();
+      });
+    });
+
   }
 
   handleSameAsShipping(checked) {
     this.sameAsShipping = checked;
     const billingSection = this.container.querySelector(`#billing-address-${this.options.blockId}`);
-    
+
     if (checked) {
       // Copy shipping address to billing address
       this.copyShippingToBilling();
@@ -402,11 +479,11 @@ class CompanyForm {
   addBillingFieldRequirements() {
     const billingFields = this.container.querySelectorAll('[id^="billing_"]');
     const requiredFields = [
-      'billing_first_name', 'billing_last_name', 'billing_phone', 
-      'billing_address1', 'billing_country', 'billing_province', 
+      'billing_first_name', 'billing_last_name', 'billing_phone',
+      'billing_address1', 'billing_country', 'billing_province',
       'billing_city', 'billing_zip'
     ];
-    
+
     billingFields.forEach(field => {
       const fieldName = field.getAttribute('name');
       if (requiredFields.includes(fieldName)) {
@@ -423,11 +500,11 @@ class CompanyForm {
 
     for (const field of fields) {
       const shippingField = this.container.querySelector(`#shipping_${field}-${this.options.blockId}`) ||
-                            this.container.querySelector(`[name="shipping_${field}"]`) ||
-                            this.container.querySelector(`[data-shipping-${field}]`);
-      const billingField  = this.container.querySelector(`#billing_${field}-${this.options.blockId}`) ||
-                            this.container.querySelector(`[name="billing_${field}"]`) ||
-                            this.container.querySelector(`[data-billing-${field}]`);
+        this.container.querySelector(`[name="shipping_${field}"]`) ||
+        this.container.querySelector(`[data-shipping-${field}]`);
+      const billingField = this.container.querySelector(`#billing_${field}-${this.options.blockId}`) ||
+        this.container.querySelector(`[name="billing_${field}"]`) ||
+        this.container.querySelector(`[data-billing-${field}]`);
 
       if (!shippingField || !billingField) continue;
 
@@ -437,7 +514,7 @@ class CompanyForm {
 
         // find billing province element and ensure provinces for copied country are loaded
         const billingProvince = this.container.querySelector(`#billing_province-${this.options.blockId}`) ||
-                                this.container.querySelector('[data-province-select="true"][data-address-type="billing"]');
+          this.container.querySelector('[data-province-select="true"][data-address-type="billing"]');
 
         if (billingProvince) {
           await this.loadProvinces(shippingField.value, billingProvince);
@@ -449,9 +526,9 @@ class CompanyForm {
       // If province: copy after provinces are loaded
       if (field === 'province') {
         const shippingProv = this.container.querySelector(`#shipping_province-${this.options.blockId}`) ||
-                             this.container.querySelector('[data-province-select="true"][data-address-type="shipping"]');
-        const billingProv  = this.container.querySelector(`#billing_province-${this.options.blockId}`) ||
-                             this.container.querySelector('[data-province-select="true"][data-address-type="billing"]');
+          this.container.querySelector('[data-province-select="true"][data-address-type="shipping"]');
+        const billingProv = this.container.querySelector(`#billing_province-${this.options.blockId}`) ||
+          this.container.querySelector('[data-province-select="true"][data-address-type="billing"]');
 
         if (shippingProv && billingProv) {
           billingProv.value = shippingProv.value || shippingProv.textContent || '';
@@ -472,21 +549,38 @@ class CompanyForm {
     // Disable submit button
     submitBtn.disabled = true;
     submitBtn.innerHTML = 'Submitting...';
-    
+
     try {
       // Get form data
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
-      //console.log("all data is",data);
-      
+
+      // phonecountry selection
+      const phoneFields = ['customer_phone', 'shipping_phone', 'billing_phone'];
+      phoneFields.forEach(field => {
+        if (!data[field]) return;
+
+        // Remove invalid characters
+        let val = String(data[field]).replace(/[^0-9+]/g, '');
+
+        // If there are multiple "+", keep only the first
+        const firstPlus = val.indexOf('+');
+        if (firstPlus > 0) {
+          val = '+' + val.slice(firstPlus).replace(/\+/g, '');
+        }
+
+        data[field] = val;
+      });
+
+
       // Add metadata
       data.timestamp = new Date().toISOString();
       data.shop_domain = window.location.hostname;
       data.block_id = this.options.blockId;
       data.same_as_shipping = this.sameAsShipping;
 
-      //console.log('Submitting data:', data);
-      
+
+
       // If same as shipping is checked, ensure billing fields are populated from shipping
       if (this.sameAsShipping) {
         this.ensureBillingDataFromShipping(data);
@@ -494,8 +588,8 @@ class CompanyForm {
 
       // Construct the full URL
       const finalEndpoint = `${this.endpointBaseUrl}/${this.options.apiEndpoint}`;
-      //console.log("Final endpoint:", finalEndpoint);
-      
+
+
       const response = await fetch(finalEndpoint, {
         method: 'POST',
         headers: {
@@ -504,12 +598,12 @@ class CompanyForm {
         body: JSON.stringify(data)
       });
 
-      //console.log('Response status:', response.status);
-      
+
+
       const result = await response.json();
-      
+
       if (response.ok) {
-        //console.log('Success response:', result);
+
         this.showSuccess(result.submissionId);
       } else {
         // Handle specific error cases
@@ -529,7 +623,7 @@ class CompanyForm {
     } catch (error) {
       console.error('Form submission error:', error);
       this.showError(error.message);
-      
+
       // Re-enable submit button
       submitBtn.disabled = false;
       submitBtn.innerHTML = 'Submit Registration';
@@ -564,7 +658,7 @@ class CompanyForm {
     this.container.querySelectorAll('.form-input--error').forEach(field => {
       field.classList.remove('form-input--error');
     });
-    
+
     // Highlight missing fields
     missingFields.forEach(fieldName => {
       const field = this.container.querySelector(`[name="${fieldName}"]`);
@@ -588,7 +682,7 @@ class CompanyForm {
     if (existingError) {
       existingError.remove();
     }
-    
+
     // Create error element
     const errorEl = document.createElement('div');
     errorEl.className = 'form-error';
@@ -597,15 +691,15 @@ class CompanyForm {
         <strong>Registration Error:</strong> ${message}
       </div>
     `;
-    
+
     const form = this.container.querySelector('form');
     if (form) {
       form.prepend(errorEl);
-      
+
       // Scroll to error message
       errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-    
+
     // Remove error after 8 seconds and clear field highlights
     setTimeout(() => {
       if (errorEl && errorEl.parentNode) {
@@ -623,16 +717,16 @@ class CompanyForm {
   showSuccess(submissionId) {
     const form = this.container.querySelector('form');
     const successDiv = this.container.querySelector(`#success-${this.options.blockId}`);
-    
+
     if (form && successDiv) {
       form.style.display = 'none';
       successDiv.style.display = 'block';
-      
+
       if (submissionId) {
         const message = successDiv.querySelector('p');
         message.innerHTML += ` Your reference ID: <strong>${submissionId}</strong>`;
       }
-      
+
       // Scroll to success message
       successDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
@@ -640,12 +734,12 @@ class CompanyForm {
 }
 
 // Global initialization
-window.initializeCompanyForm = function(containerId, options = {}) {
+window.initializeCompanyForm = function (containerId, options = {}) {
   return new CompanyForm(containerId, options);
 };
 
 // Auto-initialize
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   const formContainers = document.querySelectorAll('[id^="shopy-company-form-"]');
   formContainers.forEach(container => {
     const blockId = container.id.replace('shopy-company-form-', '');
