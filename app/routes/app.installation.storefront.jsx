@@ -19,10 +19,6 @@ export const loader = async ({ request }) => {
         console.error("Failed to fetch themes:", error);
     }
 
-    //console.log("all themes are",themes);
-  // Optionally fetch current checkout rule state from Shopify GraphQL or DB
-  // const rule = await fetchCheckoutRule(admin);
-
   return Response.json({themes, shopHandle });
 };
 
@@ -45,11 +41,8 @@ export default function CheckoutTab() {
 
   const launchThemeEditor = () => {
     if (!selectedThemeId) return;
-
-    // gid://shopify/OnlineStoreTheme/151722754197 → 151722754197
     const numericId = selectedThemeId.split("/").pop();
-
-    const url = `https://admin.shopify.com/store/${shopHandle}/themes/${numericId}/editor`;
+    const url = `https://admin.shopify.com/store/${shopHandle}/themes/${numericId}/editor?context=apps`;
     window.open(url, "_blank");
   };
 
