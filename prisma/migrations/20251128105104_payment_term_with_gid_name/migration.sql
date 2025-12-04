@@ -5,4 +5,4 @@
 
 */
 -- AlterTable
-ALTER TABLE `Preset` MODIFY `paymentTerms` JSON NULL;
+ALTER TABLE `preset` MODIFY `paymentTerms` JSON NULL;

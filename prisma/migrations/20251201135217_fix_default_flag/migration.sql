@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE `Preset` MODIFY `isDefault` BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE `preset` MODIFY `isDefault` BOOLEAN NOT NULL DEFAULT false;
