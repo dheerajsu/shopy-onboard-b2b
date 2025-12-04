@@ -178,13 +178,16 @@ export default function CompaniesPage() {
     hasPreviousPage: false,
     hasNextPage: false,
   };
+  const handleReviewClick = () => {
+     navigate(`/app/approval_presets`);
+  };
 
   return (
     <s-page>
       <s-stack direction="block" gap="base">
         <s-grid gridTemplateColumns="1fr auto">
           <s-heading>Company Applications</s-heading>
-          {/* <s-badge>Manage approval presets</s-badge> */}
+          <s-button onClick={handleReviewClick}>Manage approval presets</s-button>
         </s-grid>
 
         <s-box heading="Applications" padding="base" border="base" borderRadius="base" background="base">

@@ -25,7 +25,7 @@ export const loader = async ({ request }) => {
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const take = Math.min(
     100,
-    Math.max(1, Number(url.searchParams.get("take") || "8")),
+    Math.max(1, Number(url.searchParams.get("take") || "15")),
   );
   const skip = (page - 1) * take;
 
