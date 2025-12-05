@@ -19,6 +19,8 @@ export const loader = async ({ request }) => {
     const resp = await admin.graphql(customerAccountPagesQuery);
     const json = await resp.json();
 
+    //console.log("checkouts are",json);
+
     const shopGid = json.data.shop.id;                      // gid://shopify/Shop/80009855195
     const shopNumericId = shopGid.split("/").pop();         // "80009855195"
 
@@ -26,16 +28,16 @@ export const loader = async ({ request }) => {
 
     // Example: you distinguish pages by handle or title
     const base = `https://shopify.com/${shopNumericId}/account/pages`;
-
+    //console.log("pages titels are",pages);
     for (const page of pages) {
       if (!page.appExtensionUuid) continue; // only app extension pages
 
       // You can match however you named them in the editor / TOML
-      if (page.title === "b2-b-registration") {
+      if (page.title === "Manage B2B Registrations") {
         formPageUrl = `${base}/${page.appExtensionUuid}`;
       }
 
-      if (page.title === "manage-team") {
+      if (page.title === "Manage B2B Teams") {
         managePageUrl = `${base}/${page.appExtensionUuid}`;
       }
     }
@@ -86,7 +88,7 @@ export default function ApplicationTab() {
     try {
       await navigator.clipboard.writeText(value);
       // Optional: show toast to user
-      //console.log("Copied:", value);
+      console.log("Copied:", value);
     } catch (err) {
       console.error("Failed to copy", err);
     }

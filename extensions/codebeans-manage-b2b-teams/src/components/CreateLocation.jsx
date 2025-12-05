@@ -3,7 +3,7 @@ import { render } from 'preact';
 import React, { useEffect, useState } from "preact/hooks";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 //import { loadCountries, getPhoneHint } from "../countries"; // same folder
-import { loadCountries, loadStates, getPhoneHint } from "../../../b2-b-registration/src/countriesstate";
+import { loadCountries, loadStates, getPhoneHint } from "../../../codebeans-b2b-registrations/src/countriesstate";
 import { BASE_URL } from "../config.js";
 
 function formatPhoneE164(rawPhone, countryIso) {

@@ -6,8 +6,8 @@
 api_version = "2025-10"
 
 [[extensions]]
-name = "b2-b-registration"
-handle = "b2-b-registration"
+name = "Manage B2B Registrations"
+handle = "codebeans-b2b-registrations"
 type = "ui_extension"
 uid = "b9009293-7c1d-da1f-d37b-96c7d9557c0783f46698"
 

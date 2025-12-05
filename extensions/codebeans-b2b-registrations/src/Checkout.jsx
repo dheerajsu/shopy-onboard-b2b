@@ -428,8 +428,7 @@ function SimpleB2BForm() {
       if (result?.success) {
         setMessage(result.message || "Company created successfully");
         setTimeout(() => {
-          navigation.navigate("extension:manage-team/");
-          //navigation.navigate("extension:b2-b-registration/");
+          navigation.navigate("extension:codebeans-manage-b2b-teams/");
         }, 300);
         return;
       }
@@ -460,7 +459,7 @@ function SimpleB2BForm() {
           <s-banner tone="success">
             <s-text>You are already a member of a company: {existingCompanyValues.name}</s-text>
           </s-banner>
-          <s-button variant="primary" href="extension:manage-team/">
+          <s-button variant="primary" href="extension:codebeans-manage-b2b-teams/">
             Manage Team
           </s-button>
         </s-stack>

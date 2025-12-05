@@ -157,7 +157,7 @@ function ManageTeam() {
           <s-banner tone="success">
             <s-text>Please Check your company status</s-text>
           </s-banner>
-          <s-button variant="primary" href="extension:b2-b-registration/">
+          <s-button variant="primary" href="extension:codebeans-b2b-registrations/">
             Company Status
           </s-button>
         </s-stack>
