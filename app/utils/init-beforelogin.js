@@ -28,7 +28,7 @@ export async function initializeBeforeLoginPages(admin, session, request) {
     const result = await createPageWithTemplate(admin, session, {
       pageHandle: "createcompany",
       pageTitle: "Create Company",
-      pageBody: `<div class="shopy-create-company-page">
+      pageBody: `<div class="codebeans-create-company-page">
         <h1>Create Your Company Account</h1>
         <p>Company registration form will be displayed here.</p>
       </div>`,

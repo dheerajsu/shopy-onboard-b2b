@@ -211,7 +211,11 @@ export default function CompanyDetailRoute() {
                 </s-stack>
                   
                 <s-stack direction="inline" gap="base" alignContent="center">
+                    {contactdata.companyStatus === 'approved' || contactdata.companyStatus === 'autoApprove' ? (
+                    <s-text></s-text>
+                  ) :(
                     <EditAddressesForm/>
+                  )}
                   {company.aurthorizedStatus === false  ? (
                   <LogoutcustomerCreatecontact/>
                   ) :(

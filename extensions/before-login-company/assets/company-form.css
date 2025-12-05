@@ -290,14 +290,14 @@
   to { transform: rotate(360deg); }
 }
 
-.shopy-company-form__header {
+.codebeans-company-form__header {
   text-align: center;            /* center all text */
   background: #f8f9fa;           /* white background */
   padding: 40px 30px;            /* inner spacing */
   font-family: 'Poppins', sans-serif; /* modern, clean font */
 }
 
-.shopy-company-form__header h2 {
+.codebeans-company-form__header h2 {
   font-size: 28px;
                  /* deep gray-blue for contrast */
   margin-bottom: 15px;
@@ -305,7 +305,7 @@
   letter-spacing: 0.5px;
 }
 
-.shopy-company-form__header p {
+.codebeans-company-form__header p {
   font-size: 16px;
  
   line-height: 1.6;

@@ -1,12 +1,12 @@
 <!-- Load CSS -->
 {{ 'company-form.css' | asset_url | stylesheet_tag }}
 
-<div class="shopy-company-form-section" data-section-id="{{ block.id }}" style="background: {{ block.settings.background_color | default: '#f8f9fa' }};">
-  <div class="shopy-shopy-page-width">
-    <div class="shopy-company-form__wrapper">
+<div class="codebeans-company-form-section" data-section-id="{{ block.id }}" style="background: {{ block.settings.background_color | default: '#f8f9fa' }};">
+  <div class="codebeans-codebeans-page-width">
+    <div class="codebeans-company-form__wrapper">
       
       <!-- Header with dynamic settings -->
-      <div class="shopy-company-form__header">
+      <div class="codebeans-company-form__header">
         <h1>{{ block.settings.form_title | default: 'Company Registration' }}</h1>
         {% if block.settings.form_description != blank %}
           <p class="form-header-description">{{ block.settings.form_description }}</p>
@@ -14,8 +14,8 @@
       </div>
       
       <!-- Form Container -->
-      <div class="shopy-company-form-container">
-        <div id="shopy-company-form-{{ block.id }}"></div>
+      <div class="codebeans-company-form-container">
+        <div id="codebeans-company-form-{{ block.id }}"></div>
       </div>
       
     </div>
@@ -30,7 +30,7 @@
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     if (typeof window.initializeCompanyForm === 'function') {
-      window.initializeCompanyForm('shopy-company-form-{{ block.id }}', {
+      window.initializeCompanyForm('codebeans-company-form-{{ block.id }}', {
         blockId: '{{ block.id }}',
         apiEndpoint: 'api/company-submissions',
         requirePhone: {{ block.settings.require_phone | default: false }},

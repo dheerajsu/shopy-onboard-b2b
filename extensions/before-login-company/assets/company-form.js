@@ -243,6 +243,80 @@ class CompanyForm {
     `;
   }
 
+   _nationalDigitsAfterCountryCode(phoneValue, phoneCountryValue) {
+    if (!phoneValue) return 0;
+    // keep only digits and leading plus
+    const cleaned = String(phoneValue).trim().replace(/[^\d+]/g, "");
+    // drop leading plus for easier handling
+    let digits = cleaned.replace(/^\+/, "");
+
+    // try to resolve phoneCode for the selected country from your countries cache
+    let codeDigits = "";
+    if (phoneCountryValue && this._countriesCache) {
+      const c = this.findCountryByCode(phoneCountryValue);
+      if (c && c.phoneCode) {
+        codeDigits = String(c.phoneCode).replace(/[^\d]/g, "");
+      }
+    }
+
+    // if we found a code and digits start with it, strip it
+    if (codeDigits && digits.startsWith(codeDigits)) {
+      digits = digits.slice(codeDigits.length);
+    } else {
+      // also handle if user typed full +code but country selection contains a +nn string
+      const plusMatch = (phoneCountryValue || "").match(/\+?(\d{1,4})/);
+      if (plusMatch) {
+        const maybe = plusMatch[1];
+        if (digits.startsWith(maybe)) digits = digits.slice(maybe.length);
+      }
+    }
+
+    // remaining digits are national part
+    return digits.replace(/\D/g, "").length;
+  }
+
+    validatePhones(data) {
+    // If sameAsShipping is true, billing fields are copied from shipping.
+    // So skip billing phone validation in that case to avoid duplicate checks.
+    const checks = [
+      { phoneField: "customer_phone", countryField: "shipping_country" },
+      { phoneField: "shipping_phone", countryField: "shipping_country" },
+      { phoneField: "billing_phone",  countryField: "billing_country"  }
+    ];
+
+    for (const cfg of checks) {
+      // Skip billing validation when Same As Shipping is checked
+      // if (cfg.phoneField.startsWith("billing_") && this.sameAsShipping) {
+      //   continue;
+      // }
+      if (cfg.phoneField.startsWith("billing_") && (this.sameAsShipping || data.same_as_shipping)) {
+        continue;
+      }
+
+
+      const phoneVal = data[cfg.phoneField];
+      const countryVal = data[cfg.countryField];
+
+      // If no phone typed at all, let HTML 'required' do its job.
+      if (!phoneVal || String(phoneVal).trim() === "") continue;
+
+      // If a country is selected, enforce at least 6 digits AFTER country code
+      if (countryVal && String(countryVal).trim() !== "") {
+        const nationalDigits = this._nationalDigitsAfterCountryCode(phoneVal, countryVal);
+        if (nationalDigits < 6) {
+          this.highlightField(cfg.phoneField);
+          throw new Error("Please add your real phone number for the selected country.");
+        }
+      } else {
+        // If no country selected, enforce generic 6-digit minimum
+        const digitsOnly = String(phoneVal).replace(/[^\d]/g, "");
+        if (digitsOnly.length < 6) {
+          this.highlightField(cfg.phoneField);
+          throw new Error("Please enter a valid phone number (at least 6 digits).");
+        }
+      }
+    }
+  }
 
   async loadAllCountriesFromAsset() {
     if (this._countriesCache) return this._countriesCache;
@@ -452,6 +526,15 @@ class CompanyForm {
       });
     });
 
+    // restrict what can be typed in phone inputs
+    const phoneInputs = this.container.querySelectorAll('.phone-number-input');
+    phoneInputs.forEach(input => {
+      input.addEventListener('input', () => {
+        // allow digits, spaces, +, -, ()
+        input.value = input.value.replace(/[^0-9+\-\s()]/g, '');
+      });
+    });
+
   }
 
   handleSameAsShipping(checked) {
@@ -585,6 +668,9 @@ class CompanyForm {
       if (this.sameAsShipping) {
         this.ensureBillingDataFromShipping(data);
       }
+
+      // ADD: run phone validation (submit-time)
+      this.validatePhones(data);
 
       // Construct the full URL
       const finalEndpoint = `${this.endpointBaseUrl}/${this.options.apiEndpoint}`;
@@ -740,9 +826,9 @@ window.initializeCompanyForm = function (containerId, options = {}) {
 
 // Auto-initialize
 document.addEventListener('DOMContentLoaded', function () {
-  const formContainers = document.querySelectorAll('[id^="shopy-company-form-"]');
+  const formContainers = document.querySelectorAll('[id^="codebeans-company-form-"]');
   formContainers.forEach(container => {
-    const blockId = container.id.replace('shopy-company-form-', '');
+    const blockId = container.id.replace('codebeans-company-form-', '');
     window.initializeCompanyForm(container.id, {
       blockId: blockId,
       apiEndpoint: 'api/company-submissions'

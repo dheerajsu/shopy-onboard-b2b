@@ -498,7 +498,7 @@ export async function action({ request }) {
     address1: companyData.shipping_address1 || companyData.savedvalues.shipping.address1,
     address2: companyData.shipping_address2 || companyData.savedvalues.shipping.address2,
     city: companyData.shipping_city || companyData.savedvalues.shipping.city,
-    province: companyData.shipping_province || companyData.savedvalues.shipping.state,
+    province: companyData.shipping_province || companyData.savedvalues?.shipping?.state || companyData.savedvalues?.companytabletada?.shipping?.province,
     zip: companyData.shipping_zip || companyData.savedvalues.shipping.zip,
     countryCode: companyData.shipping_country || companyData.savedvalues.shipping.countryCode,
   };
@@ -514,7 +514,7 @@ export async function action({ request }) {
       address1: companyData.billing_address1 || companyData.savedvalues.billing.address1,
       address2: companyData.billing_address2 || companyData.savedvalues.billing.address2,
       city: companyData.billing_city || companyData.savedvalues.billing.city,
-      province: companyData.billing_province || companyData.savedvalues.billing.state,
+      province: companyData.billing_province || companyData.savedvalues?.billing?.state || companyData.savedvalues?.companytabletada?.billing?.province,
       zip: companyData.billing_zip || companyData.savedvalues.billing.zip,
       countryCode: companyData.billing_country || companyData.savedvalues.billing.countryCode,
     };
