@@ -6,8 +6,8 @@
 api_version = "2025-10"
 
 [[extensions]]
-name = "manage-team"
-handle = "manage-team"
+name = "Manage B2B Teams"
+handle = "codebeans-manage-b2b-teams"
 type = "ui_extension"
 uid = "0e2339c6-81b1-d6bd-78d1-3472e3600428e05f7334"
 
